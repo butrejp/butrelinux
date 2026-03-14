@@ -1,3 +1,7 @@
+nothing has been done with this yet.  don't try to download it
+
+it will be centos stream 10 with kde and nobara kernel tweaks one day
+
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml)
 
 See the [BlueBuild docs](https://blue-build.org/how-to/setup/) for quick setup instructions for setting up your own repository based on this template.
