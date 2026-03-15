@@ -3,8 +3,7 @@ name: butrelinux
 description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
-image-version: latest 
-
+image-version: lts
 modules:
   - type: files
     files:
@@ -13,7 +12,6 @@ modules:
 
   - type: dnf
     repos:
-      # These must be under one 'repos' object, not a list of dashes
       nonfree: rpmfusion
       files:
         - https://packages.microsoft.com
