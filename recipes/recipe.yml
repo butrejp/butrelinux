@@ -11,37 +11,37 @@ modules:
       - source: system
         destination: /
 
-  - type: rpm-ostree
+  - type: dnf
     repos:
-      - https://mirrors.rpmfusion.org
-      - https://mirrors.rpmfusion.org
-      - https://packages.microsoft.com
+      files:
+        - https://mirrors.rpmfusion.org
+        - https://mirrors.rpmfusion.org
+        - https://packages.microsoft.com
     install:
-      - fastfetch
-      - micro
-      - starship
-      - steam
-      - code
-      - btop
-      - mangohud
-      - gamemode
-      - sddm
-      - power-profiles-daemon
-      - nvtop
-      - xdg-desktop-portal-kde
-      - pipewire-codec-aptx
-      - plasma-desktop
-      - plasma-workspace-wayland
-      - kde-settings-plasma
-      - kscreen
-      - kinfocenter
-      - dolphin
-      - konsole
+      packages:
+        - fastfetch
+        - micro
+        - starship
+        - steam
+        - code
+        - btop
+        - mangohud
+        - gamemode
+        - sddm
+        - power-profiles-daemon
+        - nvtop
+        - xdg-desktop-portal-kde
+        - pipewire-codec-aptx
+    group-install:
+      packages:
+        - "KDE Plasma Workspaces"
     remove:
-      - firefox
-      - firefox-langpacks
-      - gnome-shell
-      - gdm
+      packages:
+        - firefox
+        - firefox-langpacks
+    group-remove:
+      packages:
+        - "GNOME Desktop Environment"
 
   - type: kargs
     kargs:
