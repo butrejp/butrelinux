@@ -1,5 +1,5 @@
 [rpmfusion-nonfree]
 name=RPM Fusion for EL 10 - Nonfree
-baseurl=https://mirrors.rpmfusion.org
+baseurl=https://mirrors.rpmfusion.org/el/development/10/Everything/x86_64/os/
 enabled=1
 gpgcheck=0

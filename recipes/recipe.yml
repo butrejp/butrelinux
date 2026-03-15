@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
+description: Bazzite-style KDE on Bluefin GDX (EL10) for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
@@ -12,7 +12,7 @@ modules:
         destination: /
 
   - type: dnf
-    # No 'repos' key here means no 'repo_file_path' crash!
+    # Deleting the 'repos' key completely to bypass the BlueBuild module bug
     install:
       packages:
         - fastfetch
@@ -28,16 +28,22 @@ modules:
         - nvtop
         - xdg-desktop-portal-kde
         - pipewire-codec-aptx
-    group-install:
-      packages:
-        - "KDE Plasma Workspaces"
+        # Explicit KDE core packages for EL10 stability
+        - plasma-desktop
+        - plasma-workspace-wayland
+        - kde-settings-plasma
+        - kscreen
+        - kinfocenter
+        - dolphin
+        - konsole
+        - sddm-kcm
+        - sddm-breeze
     remove:
       packages:
         - firefox
         - firefox-langpacks
-    group-remove:
-      packages:
-        - "GNOME Desktop Environment"
+        - gnome-shell
+        - gdm
 
   - type: kargs
     kargs:
