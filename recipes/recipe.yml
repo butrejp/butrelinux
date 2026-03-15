@@ -12,9 +12,7 @@ modules:
         destination: /
 
   - type: dnf
-    repos:
-      files:
-        - https://packages.microsoft.com
+    # No 'repos' key here means no 'repo_file_path' crash!
     install:
       packages:
         - fastfetch
