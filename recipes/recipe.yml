@@ -3,20 +3,13 @@ name: butrelinux
 description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
-image-version: lts 
+image-version: lts
 
 modules:
   - type: files
     files:
       - source: system
         destination: /
-
-  # STEP 1: Install the RPM Fusion repo files as packages. 
-  - type: dnf
-    install:
-      packages:
-        - https://mirrors.rpmfusion.org
-        - https://mirrors.rpmfusion.org
 
   - type: dnf
     repos:
@@ -55,8 +48,8 @@ modules:
       - rd.driver.blacklist=nouveau
       - modprobe.blacklist=nouveau
       - amdgpu.ppfeaturemask=0xffffffff
-      - acpi_backlight=vendor 
-      - split_lock_detect=off 
+      - acpi_backlight=vendor
+      - split_lock_detect=off
 
   - type: systemd
     system:

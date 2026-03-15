@@ -1,0 +1,5 @@
+[rpmfusion-free]
+name=RPM Fusion for EL 10 - Free
+baseurl=https://mirrors.rpmfusion.org
+enabled=1
+gpgcheck=0
