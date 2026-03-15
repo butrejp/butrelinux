@@ -1,45 +1,59 @@
----
-# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-# image will be published to ghcr.io/<user>/<name>
+# yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-# description will be included in the image's metadata
-description: This is my personal OS image.
+description: Bluefin GDX on kde, hopefully.
 
-# the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/ublue-os/silverblue-main
-image-version: 42 # latest is also supported if you want new updates ASAP
+base-image: ghcr.io/ublue-os/bluefin-gdx
+image-version: stable 
 
-# module configuration, executed in order
-# you can include multiple instances of the same module
 modules:
   - type: files
     files:
       - source: system
-        destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+        destination: /
 
   - type: dnf
     repos:
-      copr:
-        - atim/starship
+      nonfree: rpmfusion
+      files:
+        - https://packages.microsoft.com
     install:
       packages:
+        - fastfetch
         - micro
         - starship
+        - steam
+        - code
+        - btop
+        - mangohud
+        - gamemode
+        - sddm # Ensure the package is explicitly installed
+    group-install:
+      packages:
+        - "KDE Plasma Workspaces"
     remove:
       packages:
-        # example: removing firefox (in favor of the flatpak)
-        # "firefox" is the main package, "firefox-langpacks" is a dependency
         - firefox
-        - firefox-langpacks # also remove firefox dependency (not required for all packages, this is a special case)
+        - firefox-langpacks
+    group-remove:
+      packages:
+        - "GNOME Desktop Environment"
+
+  # Automates the display manager switch during the build
+  - type: systemd
+    system:
+      enabled:
+        - sddm.service
+      disabled:
+        - gdm.service
 
   - type: default-flatpaks
     configurations:
-      - notify: true # Send notification after install/uninstall is finished (true/false)
+      - notify: true
         scope: system
-        # If no repo information is specified, Flathub will be used by default
-        install: # system flatpaks we want all users to have and not remove
+        install:
           - org.mozilla.firefox
-          - org.gnome.Loupe
-      - scope: user # Also add Flathub user repo, but no user packages
+          - org.kde.gwenview
+          - it.miosemante.gearlever
+      - scope: user
 
-  - type: signing # this sets up the proper policy & signing files for signed images to work fully
+  - type: signing
