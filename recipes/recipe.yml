@@ -3,43 +3,45 @@ name: butrelinux
 description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
-image-version: lts
+image-version: lts 
+
 modules:
   - type: files
     files:
       - source: system
         destination: /
 
-  - type: dnf
+  - type: rpm-ostree
     repos:
-      nonfree: rpmfusion
-      files:
-        - https://packages.microsoft.com
+      - https://mirrors.rpmfusion.org
+      - https://mirrors.rpmfusion.org
+      - https://packages.microsoft.com
     install:
-      packages:
-        - fastfetch
-        - micro
-        - starship
-        - steam
-        - code
-        - btop
-        - mangohud
-        - gamemode
-        - sddm
-        - power-profiles-daemon
-        - nvtop
-        - xdg-desktop-portal-kde
-        - pipewire-codec-aptx
-    group-install:
-      packages:
-        - "KDE Plasma Workspaces"
+      - fastfetch
+      - micro
+      - starship
+      - steam
+      - code
+      - btop
+      - mangohud
+      - gamemode
+      - sddm
+      - power-profiles-daemon
+      - nvtop
+      - xdg-desktop-portal-kde
+      - pipewire-codec-aptx
+      - plasma-desktop
+      - plasma-workspace-wayland
+      - kde-settings-plasma
+      - kscreen
+      - kinfocenter
+      - dolphin
+      - konsole
     remove:
-      packages:
-        - firefox
-        - firefox-langpacks
-    group-remove:
-      packages:
-        - "GNOME Desktop Environment"
+      - firefox
+      - firefox-langpacks
+      - gnome-shell
+      - gdm
 
   - type: kargs
     kargs:
