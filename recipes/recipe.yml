@@ -1,6 +1,6 @@
-# yaml-language-server: $schema=https://schema.blue-build.org
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: butrelinux
-description: Bluefin GDX on kde, hopefully.
+description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: stable 
@@ -26,7 +26,11 @@ modules:
         - btop
         - mangohud
         - gamemode
-        - sddm # Ensure the package is explicitly installed
+        - sddm
+        - power-profiles-daemon
+        - nvtop
+        - xdg-desktop-portal-kde
+        - pipewire-codec-aptx
     group-install:
       packages:
         - "KDE Plasma Workspaces"
@@ -38,11 +42,21 @@ modules:
       packages:
         - "GNOME Desktop Environment"
 
-  # Automates the display manager switch during the build
+  - type: kargs
+    args:
+      - nvidia-drm.modeset=1
+      - nvidia.NVreg_PreserveVideoMemoryAllocations=1
+      - rd.driver.blacklist=nouveau
+      - modprobe.blacklist=nouveau
+      - amdgpu.ppfeaturemask=0xffffffff
+      - acpi_backlight=vendor 
+      - split_lock_detect=off 
+
   - type: systemd
     system:
       enabled:
         - sddm.service
+        - power-profiles-daemon.service
       disabled:
         - gdm.service
 
