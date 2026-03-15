@@ -1,6 +1,6 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
+description: bluefin-gdx with kde and a couple bazzite bits
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: stable 
