@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: bluefin-gdx with kde and a couple bazzite bits
+description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: stable 
@@ -13,7 +13,9 @@ modules:
 
   - type: dnf
     repos:
+      # Enables RPM Fusion for Steam/Codecs
       nonfree: rpmfusion
+      # Direct VS Code repo
       files:
         - https://packages.microsoft.com
     install:
@@ -43,7 +45,7 @@ modules:
         - "GNOME Desktop Environment"
 
   - type: kargs
-    args:
+    kargs:
       - nvidia-drm.modeset=1
       - nvidia.NVreg_PreserveVideoMemoryAllocations=1
       - rd.driver.blacklist=nouveau
@@ -71,3 +73,4 @@ modules:
       - scope: user
 
   - type: signing
+
