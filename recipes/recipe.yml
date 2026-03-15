@@ -11,11 +11,16 @@ modules:
       - source: system
         destination: /
 
+  # STEP 1: Install the RPM Fusion repo files as packages. 
+  - type: dnf
+    install:
+      packages:
+        - https://mirrors.rpmfusion.org
+        - https://mirrors.rpmfusion.org
+
   - type: dnf
     repos:
       files:
-        - https://mirrors.rpmfusion.org
-        - https://mirrors.rpmfusion.org
         - https://packages.microsoft.com
     install:
       packages:
