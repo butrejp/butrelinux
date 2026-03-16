@@ -21,15 +21,10 @@ modules:
 
   - type: rpm-ostree
     install:
+      - policycoreutils
       - policycoreutils-python-utils
-      - policycoreutils 
       - selinux-policy-targeted
-      - fastfetch
-      - micro
-      - btop
-      - sddm
-      - nvtop
-      - xdg-desktop-portal-kde
+      - libsemanage-utils
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
@@ -37,11 +32,14 @@ modules:
       - kinfocenter
       - dolphin
       - konsole
+      - sddm
       - sddm-kcm
       - sddm-breeze
-      - tuned
-      - tuned-ppd # Critical for KDE UI integration
-      - tuned-utils
+      - fastfetch
+      - micro
+      - btop
+      - nvtop
+      - xdg-desktop-portal-kde
     remove:
       - gnome-initial-setup
       - gnome-session-wayland-session
