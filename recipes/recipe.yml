@@ -21,6 +21,7 @@ modules:
 
   - type: rpm-ostree
     install:
+      - policycoreutils-python-utils
       - policycoreutils 
       - selinux-policy-targeted
       - fastfetch
