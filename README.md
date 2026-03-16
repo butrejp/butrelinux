@@ -1,6 +1,4 @@
-nothing has been done with this yet.  don't try to download it
-
-it will be centos stream 10 with kde and nobara kernel tweaks one day
+WIP.  don't try to use it yet.  look at recipes/recipe.yml for what this is
 
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml)
 
