@@ -11,16 +11,20 @@ modules:
       - source: system
         destination: /
 
+  # Stage 1: Install the RPM Fusion release packages directly via DNF
+  - type: dnf
+    install:
+      packages:
+        - https://mirrors.rpmfusion.org
+        - https://mirrors.rpmfusion.org
+
+  # Stage 2: Install everything else
   - type: rpm-ostree
     install:
-      # Direct RPM links to bypass EL10 metadata issues for RPM Fusion
-      - https://mirrors.rpmfusion.org
-      - https://mirrors.rpmfusion.org
       - fastfetch
       - micro
       - starship
       - steam
-      - code # This will now pull correctly from your local vscode.repo
       - btop
       - mangohud
       - gamemode
