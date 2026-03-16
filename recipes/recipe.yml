@@ -21,6 +21,7 @@ modules:
 
   - type: rpm-ostree
     install:
+      - policycoreutils 
       - fastfetch
       - micro
       - btop
