@@ -1,4 +1,4 @@
-WIP.  don't try to use it yet.  if you do manage to use it, let me know what the hell you did different because I'm struggling to rebase.  look at recipes/recipe.yml for what this is
+WIP.  don't try to use it yet.  if you do manage to use it, let me know what the hell you did different because I'm struggling to make this work.  none of these tools seem to be structured properly to deal with centos bases instead of fedora bases
 
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml)
 
