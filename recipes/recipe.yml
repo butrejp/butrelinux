@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
+description: Bluefin GDX on KDE
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
@@ -11,16 +11,12 @@ modules:
       - source: system
         destination: /
 
-  # Stage 1: Install the RPM Fusion release packages directly via DNF
-  - type: dnf
-    install:
-      packages:
-        - https://mirrors.rpmfusion.org
-        - https://mirrors.rpmfusion.org
-
-  # Stage 2: Install everything else
   - type: rpm-ostree
     install:
+      # Install the repo packages from the local files you just added
+      - /tmp/files/rpms/rpmfusion-free-release-10-0.1.noarch.rpm
+      - /tmp/files/rpms/rpmfusion-nonfree-release-10-0.1.noarch.rpm
+      # Core packages
       - fastfetch
       - micro
       - starship
@@ -33,6 +29,7 @@ modules:
       - nvtop
       - xdg-desktop-portal-kde
       - pipewire-codec-aptx
+      # KDE Plasma Core
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
