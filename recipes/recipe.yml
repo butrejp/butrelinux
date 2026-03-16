@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: Bazzite-style KDE on Bluefin GDX (EL10) for Lenovo Legion 5.
+description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
@@ -11,39 +11,38 @@ modules:
       - source: system
         destination: /
 
-  - type: dnf
-    # Deleting the 'repos' key completely to bypass the BlueBuild module bug
+  - type: rpm-ostree
     install:
-      packages:
-        - fastfetch
-        - micro
-        - starship
-        - steam
-        - code
-        - btop
-        - mangohud
-        - gamemode
-        - sddm
-        - power-profiles-daemon
-        - nvtop
-        - xdg-desktop-portal-kde
-        - pipewire-codec-aptx
-        # Explicit KDE core packages for EL10 stability
-        - plasma-desktop
-        - plasma-workspace-wayland
-        - kde-settings-plasma
-        - kscreen
-        - kinfocenter
-        - dolphin
-        - konsole
-        - sddm-kcm
-        - sddm-breeze
+      # Direct RPM links to bypass EL10 metadata issues for RPM Fusion
+      - https://mirrors.rpmfusion.org
+      - https://mirrors.rpmfusion.org
+      - fastfetch
+      - micro
+      - starship
+      - steam
+      - code # This will now pull correctly from your local vscode.repo
+      - btop
+      - mangohud
+      - gamemode
+      - sddm
+      - power-profiles-daemon
+      - nvtop
+      - xdg-desktop-portal-kde
+      - pipewire-codec-aptx
+      - plasma-desktop
+      - plasma-workspace-wayland
+      - kde-settings-plasma
+      - kscreen
+      - kinfocenter
+      - dolphin
+      - konsole
+      - sddm-kcm
+      - sddm-breeze
     remove:
-      packages:
-        - firefox
-        - firefox-langpacks
-        - gnome-shell
-        - gdm
+      - firefox
+      - firefox-langpacks
+      - gnome-shell
+      - gdm
 
   - type: kargs
     kargs:
