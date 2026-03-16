@@ -8,33 +8,26 @@ image-version: lts
 modules:
   - type: files
     files:
-      - source: rpms # This takes files/rpms/*
-        destination: /rpms # and puts them in /rpms/ inside the image
+      - source: rpms
+        destination: /rpms
       - source: system
         destination: /
 
-  # Stage 1: Install the local RPMs to activate the repos
   - type: dnf
     install:
       packages:
         - /rpms/rpmfusion-free-release-10.noarch.rpm
         - /rpms/rpmfusion-nonfree-release-10.noarch.rpm
 
-  # Stage 2: Install the packages now that the repos are active
   - type: rpm-ostree
     install:
       - fastfetch
       - micro
-      - starship
       - steam
       - btop
-      - mangohud
-      - gamemode
       - sddm
-      - power-profiles-daemon
       - nvtop
       - xdg-desktop-portal-kde
-      - pipewire-codec-aptx
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
@@ -62,7 +55,6 @@ modules:
     system:
       enabled:
         - sddm.service
-        - power-profiles-daemon.service
       disabled:
         - gdm.service
 
