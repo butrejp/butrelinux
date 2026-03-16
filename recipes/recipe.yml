@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: Bazzite-style KDE on Bluefin GDX for Lenovo Legion 5.
+description: Bluefin-GDX with KDE
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
@@ -8,18 +8,19 @@ image-version: lts
 modules:
   - type: files
     files:
+      - source: rpms # This takes files/rpms/*
+        destination: /rpms # and puts them in /rpms/ inside the image
       - source: system
         destination: /
 
-  # Stage 1: Use DNF to install the local RPM files.
-  # Using the internal destination path where the files module puts them.
+  # Stage 1: Install the local RPMs to activate the repos
   - type: dnf
     install:
       packages:
         - /rpms/rpmfusion-free-release-10.noarch.rpm
         - /rpms/rpmfusion-nonfree-release-10.noarch.rpm
 
-  # Stage 2: Now that Stage 1 activated the repos, install the packages.
+  # Stage 2: Install the packages now that the repos are active
   - type: rpm-ostree
     install:
       - fastfetch
