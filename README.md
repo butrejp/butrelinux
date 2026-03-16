@@ -1,4 +1,4 @@
-WIP.  don't try to use it yet.  look at recipes.yml for what this is
+WIP.  don't try to use it yet.  look at recipes/recipe.yml for what this is
 
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml)
 
