@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
-description: Bluefin-GDX with KDE
+description: Bluefin-GDX with KDE Plasma
 
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
@@ -37,13 +37,11 @@ modules:
       - sddm-kcm
       - sddm-breeze
     remove:
-      # Removing the blockers you identified
       - gnome-initial-setup
       - gnome-session-wayland-session
       - gnome-session
       - gnome-shell
       - gdm
-      # Optional: cleaning up other likely GNOME leftovers
       - gnome-control-center
       - nautilus
 
@@ -71,8 +69,8 @@ modules:
         install:
           - org.mozilla.firefox
           - org.kde.gwenview
-          - it.miosemante.gearlever
           - com.valvesoftware.Steam
+          - it.mijorus.gearlever # Corrected ID
       - scope: user
 
   - type: signing
