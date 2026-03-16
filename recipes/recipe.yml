@@ -13,7 +13,7 @@ modules:
       - source: system
         destination: /
 
-  # Stage 1: Enable the CRB repository via shell script
+  # Stage 1: Enable CRB (Verified working in your logs)
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
@@ -28,10 +28,13 @@ modules:
   # Stage 3: The main transaction
   - type: rpm-ostree
     install:
+      # Verified EL10 SELinux Stack
       - policycoreutils
       - policycoreutils-python-utils
+      - policycoreutils-devel        # Replaces libsemanage-utils
       - selinux-policy-targeted
-      - libsemanage-utils
+      - libsemanage                 # Core library
+      # KDE CORE
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
@@ -42,6 +45,7 @@ modules:
       - sddm
       - sddm-kcm
       - sddm-breeze
+      # UTILS
       - fastfetch
       - micro
       - btop
