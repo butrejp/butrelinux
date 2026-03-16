@@ -13,12 +13,19 @@ modules:
       - source: system
         destination: /
 
+  # Stage 1: Enable the CRB repository required for libsemanage-utils
+  - type: dnf
+    run:
+      - dnf config-manager --set-enabled crb
+
+  # Stage 2: Install Repo RPMs
   - type: dnf
     install:
       packages:
         - /rpms/rpmfusion-free-release-10.noarch.rpm
         - /rpms/rpmfusion-nonfree-release-10.noarch.rpm
 
+  # Stage 3: The main transaction
   - type: rpm-ostree
     install:
       - policycoreutils
@@ -74,7 +81,7 @@ modules:
           - org.mozilla.firefox
           - org.kde.gwenview
           - com.valvesoftware.Steam
-          - it.mijorus.gearlever # Corrected ID
+          - it.mijorus.gearlever
       - scope: user
 
   - type: signing
