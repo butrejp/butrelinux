@@ -13,8 +13,8 @@ modules:
 
   - type: rpm-ostree
     install:
-      - /tmp/files/rpms/rpmfusion-free-release-10-0.1.noarch.rpm
-      - /tmp/files/rpms/rpmfusion-nonfree-release-10-0.1.noarch.rpm
+      - /tmp/files/rpms/rpmfusion-free-release-10.noarch.rpm
+      - /tmp/files/rpms/rpmfusion-nonfree-release-10.noarch.rpm
       - fastfetch
       - micro
       - starship
