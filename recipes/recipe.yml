@@ -13,10 +13,8 @@ modules:
 
   - type: rpm-ostree
     install:
-      # Install the repo packages from the local files you just added
       - /tmp/files/rpms/rpmfusion-free-release-10-0.1.noarch.rpm
       - /tmp/files/rpms/rpmfusion-nonfree-release-10-0.1.noarch.rpm
-      # Core packages
       - fastfetch
       - micro
       - starship
@@ -29,7 +27,6 @@ modules:
       - nvtop
       - xdg-desktop-portal-kde
       - pipewire-codec-aptx
-      # KDE Plasma Core
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
@@ -40,8 +37,6 @@ modules:
       - sddm-kcm
       - sddm-breeze
     remove:
-      - firefox
-      - firefox-langpacks
       - gnome-shell
       - gdm
 
