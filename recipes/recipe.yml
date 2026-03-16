@@ -40,7 +40,6 @@ modules:
       - tuned-ppd # Critical for KDE UI integration
       - tuned-utils
     remove:
-      - power-profiles-daemon
       - gnome-initial-setup
       - gnome-session-wayland-session
       - gnome-session
