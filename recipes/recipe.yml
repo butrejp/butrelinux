@@ -13,9 +13,9 @@ modules:
       - source: system
         destination: /
 
-  # Stage 1: Enable the CRB repository required for libsemanage-utils
-  - type: dnf
-    run:
+  # Stage 1: Enable the CRB repository via shell script
+  - type: script
+    snippets:
       - dnf config-manager --set-enabled crb
 
   # Stage 2: Install Repo RPMs
