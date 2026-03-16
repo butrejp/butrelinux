@@ -1,20 +1,17 @@
 name: Build ButreLinux ISO
 
 on:
-  workflow_dispatch:  # Trigger manually from GitHub Actions tab
+  workflow_dispatch:  # Manual trigger from Actions tab
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write  # If pushing artifacts or images
     steps:
-      - name: Checkout repo
+      - name: Checkout repo  # Optional but good for any custom files
         uses: actions/checkout@v4
 
-      - name: Build ISO with build-container-installer
-        uses: jasonn3/build-container-installer@main  # or @v1.4.0 if pinned
+      - name: Build ISO
+        uses: jasonn3/build-container-installer@main  # Use @main for latest fixes, or pin to @v1.4.0
         id: build
         with:
           arch: x86_64
@@ -22,9 +19,9 @@ jobs:
           image_repo: ghcr.io/butrejp
           image_tag: latest
           version: 10
-          variant: generic  # Try workstation or server if generic fails
+          variant: generic  # Try 'workstation' if generic fails with branch error
           iso_name: butrelinux-installer.iso
-          # Optional: enrollment_password: universalblue
+          # enrollment_password: universalblue  # Uncomment if you want secure boot enrollment
           # secure_boot_key_url: https://github.com/ublue-os/bazzite/raw/main/secure_boot.der
 
       - name: Upload ISO artifact
@@ -32,6 +29,7 @@ jobs:
         with:
           name: butrelinux-iso
           path: |
-            $$   {{ steps.build.outputs.iso_path }}/   $${{ steps.build.outputs.iso_name }}
-            $$   {{ steps.build.outputs.iso_path }}/   $${{ steps.build.outputs.iso_name }}-CHECKSUM
-          retention-days: 7
+            ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}
+            ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM
+          retention-days: 14  # Keep artifacts for 2 weeks
+          if-no-files-found: error  # Fail if ISO missing
