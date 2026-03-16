@@ -1,4 +1,6 @@
-WIP.  don't try to use it yet.  if you do manage to use it, let me know what the hell you did different because I'm struggling to make this work.  none of these tools seem to be structured properly to deal with centos bases instead of fedora bases
+WIP.  don't try to use it yet.  
+you must rebase from bluefin-gdx or bluefin-lts, not any fedora version
+there will be no support until I decide that it's ready to go.  you're on your own if you install this.
 
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml)
 
