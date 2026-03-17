@@ -13,7 +13,7 @@ After setup, it is recommended you update this README to describe your custom im
 > [!WARNING]  
 > [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
 
-To rebase an existing Bluefin installation to the latest build:
+To rebase an existing Bluefin LTS or GDX installation to the latest build:
 - First, clean up all the default gnome junk
   ```
   flatpak uninstall --all # use with caution.  not all the flatpaks you might actually want are set up in the recipe yet
