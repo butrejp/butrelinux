@@ -76,8 +76,8 @@ modules:
       - scope: user
 
   - type: script
-        scripts: 
-          - image-info.sh
+    scripts: 
+      - image-info.sh
 
 
   - type: signing
