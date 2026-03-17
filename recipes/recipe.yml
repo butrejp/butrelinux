@@ -77,6 +77,6 @@ modules:
 
   - type: script
         scripts:
-          - 00-image-info.sh
+          - image-info.sh
 
   - type: signing
