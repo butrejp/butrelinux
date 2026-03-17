@@ -3,6 +3,7 @@ name: butrelinux
 description: Bluefin-GDX with KDE Plasma
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
+
 modules:
   - type: files
     files:
@@ -10,39 +11,64 @@ modules:
         destination: /rpms
       - source: system
         destination: /
+
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
+
   - type: dnf
     install:
       packages:
         - /rpms/rpmfusion-free-release-10.noarch.rpm
         - /rpms/rpmfusion-nonfree-release-10.noarch.rpm
+
   - type: rpm-ostree
     install:
+      # SELinux/policy utils (your original)
       - policycoreutils
       - policycoreutils-python-utils
       - policycoreutils-devel
       - selinux-policy-targeted
       - libsemanage
+
+      # Core Plasma desktop environment
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
       - kscreen
       - kinfocenter
-      - dolphin
-      - kio-admin
-      - konsole
-      - kate
       - sddm
       - sddm-kcm
       - sddm-breeze
+
+      # File/terminal heavy hitters – layered for native CLI usage
+      - dolphin           # file manager
+      - kate              # text editor
+      - konsole           # terminal
+      - kio-admin         # root file ops in Dolphin
+      - ark               # archive manager
+      - spectacle         # screenshots (CLI support)
+      - okular            # PDF viewer
+
+      # Additional useful KDE/system tools
+      - plasma-systemmonitor
+      - kdeconnect
+      - plasma-discover   # KDE software/Flatpak center
+
+      # Theming & GTK compatibility (important for non-Qt apps in KDE)
+      - kde-gtk-config
+      - breeze-gtk
+      - gnome-themes-extra
+
+      # Your original utilities
       - fastfetch
       - micro
       - btop
       - nvtop
       - xdg-desktop-portal-kde
+
     remove:
+      # Core GNOME components to remove for clean Plasma switch
       - gnome-initial-setup
       - gnome-session-wayland-session
       - gnome-session
@@ -51,6 +77,13 @@ modules:
       - gnome-control-center
       - nautilus
       - ptyxis
+
+      # Additional GNOME cleanup
+      - gnome-software
+      - gnome-tour
+      - gnome-classic-session
+      - gnome-extensions-app
+
   - type: kargs
     kargs:
       - nvidia-drm.modeset=1
@@ -60,26 +93,28 @@ modules:
       - amdgpu.ppfeaturemask=0xffffffff
       - acpi_backlight=vendor
       - split_lock_detect=off
+
   - type: systemd
     system:
       enabled:
         - sddm.service
       disabled:
         - gdm.service
+
   - type: default-flatpaks
     configurations:
       - notify: true
         scope: system
         install:
-          - org.mozilla.firefox
-          - org.kde.gwenview
-          - com.valvesoftware.Steam
-          - it.mijorus.gearlever
-      - scope: user
+          - org.mozilla.firefox          # browser – sandboxed Flatpak is great
+          - com.valvesoftware.Steam      # gaming – standard on uBlue
+          - it.mijorus.gearlever         # AppImage manager
+
+          # Optional pure-GUI / no-CLI KDE apps (no file forwarding needed)
+          - org.kde.kcalc                # calculator
 
   - type: script
-    scripts: 
+    scripts:
       - image-info.sh
-
 
   - type: signing
