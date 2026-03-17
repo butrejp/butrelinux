@@ -41,24 +41,17 @@ modules:
       - sddm-kcm
       - sddm-breeze
 
-      # File/terminal heavy hitters – layered for native CLI usage
-      - dolphin           # file manager
-      - kate              # text editor
-      - konsole           # terminal
-      - kio-admin         # root file ops in Dolphin
-      - ark               # archive manager
-      - spectacle         # screenshots (CLI support)
-      - okular            # PDF viewer
-
-      # Additional useful KDE/system tools
+      - dolphin                     # file manager
+      - kate                        # text editor
+      - konsole                     # terminal
+      - kio-admin                   # root file ops in Dolphin
+      - ark                         # archive manager
+      - spectacle                   # screenshots (CLI support)
+      - okular                      # PDF viewer
       - plasma-systemmonitor
-      - plasma-discover   # KDE software/Flatpak center
-
-      # Theming & GTK compatibility (important for non-Qt apps in KDE)
       - kde-gtk-config
       - breeze-gtk
 
-      # Your original utilities
       - fastfetch
       - micro
       - btop
@@ -101,8 +94,7 @@ modules:
           - org.mozilla.firefox          # browser – sandboxed Flatpak is great
           - com.valvesoftware.Steam      # gaming – standard on uBlue
           - it.mijorus.gearlever         # AppImage manager
-
-          # Optional pure-GUI / no-CLI KDE apps (no file forwarding needed)
+          - io.github.kolunmi.Bazaar     # Package Manager
           - org.kde.kcalc                # calculator
 
   - type: script
