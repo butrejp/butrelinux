@@ -13,9 +13,13 @@ After setup, it is recommended you update this README to describe your custom im
 > [!WARNING]  
 > [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
 
-To rebase an existing atomic Fedora installation to the latest build:
+To rebase an existing Bluefin installation to the latest build:
+- First, clean up all the default gnome junk
+  ```
+  flatpak uninstall --all # use with caution.  not all the flatpaks you might actually want are set up in the recipe yet
+  ```
 
-- First rebase to the unsigned image, to get the proper signing keys and policies installed:
+- Rebase to the unsigned image, to get the proper signing keys and policies installed:
   ```
   rpm-ostree rebase ostree-unverified-registry:ghcr.io/butrejp/butrelinux:latest
   ```
@@ -32,11 +36,7 @@ To rebase an existing atomic Fedora installation to the latest build:
   systemctl reboot
   ```
 
-The `latest` tag will automatically point to the latest build. That build will still always use the Fedora version specified in `recipe.yml`, so you won't get accidentally updated to the next major version.
-
-## ISO
-
-If build on Fedora Atomic, you can generate an offline ISO with the instructions available [here](https://blue-build.org/how-to/generate-iso/#_top). These ISOs cannot unfortunately be distributed on GitHub for free due to large sizes, so for public projects something else has to be used for hosting.
+The `latest` tag will automatically point to the latest build. That build will still always use the version specified in `recipe.yml`, so you won't get accidentally updated to the next major version.
 
 ## Verification
 
