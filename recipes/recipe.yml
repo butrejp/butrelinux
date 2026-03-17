@@ -52,13 +52,11 @@ modules:
 
       # Additional useful KDE/system tools
       - plasma-systemmonitor
-      - kdeconnect
       - plasma-discover   # KDE software/Flatpak center
 
       # Theming & GTK compatibility (important for non-Qt apps in KDE)
       - kde-gtk-config
       - breeze-gtk
-      - gnome-themes-extra
 
       # Your original utilities
       - fastfetch
