@@ -32,6 +32,7 @@ modules:
       - kinfocenter
       - dolphin
       - konsole
+      - kate
       - sddm
       - sddm-kcm
       - sddm-breeze
