@@ -81,7 +81,6 @@ modules:
       # Additional GNOME cleanup
       - gnome-software
       - gnome-tour
-      - gnome-extensions-app
 
   - type: kargs
     kargs:
