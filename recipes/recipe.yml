@@ -78,10 +78,6 @@ modules:
       - nautilus
       - ptyxis
 
-      # Additional GNOME cleanup
-      - gnome-software
-      - gnome-tour
-
   - type: kargs
     kargs:
       - nvidia-drm.modeset=1
