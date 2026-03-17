@@ -1,10 +1,8 @@
 # yaml-language-server: $schema=https://schema.blue-build.org
 name: butrelinux
 description: Bluefin-GDX with KDE Plasma
-
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
-
 modules:
   - type: files
     files:
@@ -12,29 +10,21 @@ modules:
         destination: /rpms
       - source: system
         destination: /
-
-  # Stage 1: Enable CRB (Verified working in your logs)
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
-
-  # Stage 2: Install Repo RPMs
   - type: dnf
     install:
       packages:
         - /rpms/rpmfusion-free-release-10.noarch.rpm
         - /rpms/rpmfusion-nonfree-release-10.noarch.rpm
-
-  # Stage 3: The main transaction
   - type: rpm-ostree
     install:
-      # Verified EL10 SELinux Stack
       - policycoreutils
       - policycoreutils-python-utils
-      - policycoreutils-devel        # Replaces libsemanage-utils
+      - policycoreutils-devel
       - selinux-policy-targeted
-      - libsemanage                 # Core library
-      # KDE CORE
+      - libsemanage
       - plasma-desktop
       - plasma-workspace-wayland
       - kde-settings-plasma
@@ -45,7 +35,6 @@ modules:
       - sddm
       - sddm-kcm
       - sddm-breeze
-      # UTILS
       - fastfetch
       - micro
       - btop
@@ -59,7 +48,7 @@ modules:
       - gdm
       - gnome-control-center
       - nautilus
-
+      - ptyxis
   - type: kargs
     kargs:
       - nvidia-drm.modeset=1
@@ -69,14 +58,12 @@ modules:
       - amdgpu.ppfeaturemask=0xffffffff
       - acpi_backlight=vendor
       - split_lock_detect=off
-
   - type: systemd
     system:
       enabled:
         - sddm.service
       disabled:
         - gdm.service
-
   - type: default-flatpaks
     configurations:
       - notify: true
@@ -87,5 +74,33 @@ modules:
           - com.valvesoftware.Steam
           - it.mijorus.gearlever
       - scope: user
+  - type: script
+    snippets:
+      - |
+        #!/usr/bin/env bash
+        set -euo pipefail
 
+        flatpak uninstall -y --system \
+          org.gnome.Calculator \
+          org.gnome.Calendar \
+          org.gnome.Characters \
+          org.gnome.Connections \
+          org.gnome.Contacts \
+          org.gnome.DejaDup \
+          org.gnome.FileRoller \
+          org.gnome.Firmware \
+          org.gnome.Logs \
+          org.gnome.Loupe \
+          org.gnome.Maps \
+          org.gnome.NautilusPreviewer \
+          org.gnome.Papers \
+          org.gnome.SimpleScan \
+          org.gnome.TextEditor \
+          org.gnome.Weather \
+          org.gnome.baobab \
+          org.gnome.clocks \
+          org.gnome.font-viewer || true
+
+        flatpak uninstall --unused -y --system || true
+        flatpak repair || true
   - type: signing
