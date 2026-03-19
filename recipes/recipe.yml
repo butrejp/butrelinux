@@ -58,8 +58,11 @@ modules:
       - btop
       - nvtop
       - xdg-desktop-portal-kde
+
       - powerdevil
-      - steam
+      - tuned
+      - tuned-ppd
+      - tuned-profiles-atomic
 
     remove:
       # Core GNOME components to remove for clean Plasma switch
@@ -86,6 +89,7 @@ modules:
     system:
       enabled:
         - sddm.service
+        - tuned.service
       disabled:
         - gdm.service
 
@@ -98,9 +102,18 @@ modules:
           - it.mijorus.gearlever         # AppImage manager
           - io.github.kolunmi.Bazaar     # Package Manager
           - org.kde.kcalc                # calculator
+          - com.valvesoftware.Steam
 
   - type: script
     scripts:
       - image-info.sh
+      
+  - type: script
+    snippets:
+    - |
+      flatpak override --system --env=__NV_PRIME_RENDER_OFFLOAD=1 \
+        --env=__VK_LAYER_NV_optimus=NVIDIA_only \
+        --env=__GLX_VENDOR_LIBRARY_NAME=nvidia \
+        com.valvesoftware.Steam
 
   - type: signing
