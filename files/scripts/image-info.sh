@@ -3,7 +3,7 @@ set -ouex pipefail
 
 IMAGE_VENDOR="butrejp"
 IMAGE_NAME="butrelinux"
-IMAGE_PRETTY_NAME="ButreLinux"
+IMAGE_PRETTY_NAME="butrelinux"
 IMAGE_TAG="latest"
 IMAGE_LIKE="centos rhel fedora"
 
