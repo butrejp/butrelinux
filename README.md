@@ -44,6 +44,7 @@ since /etc/skel can't touch existing users, copy my kde configuration defaults t
 ```bash
 mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
 ```
+or don't, I'm not your mom.  make whatever config you want
 ## verification
 
 these images are signed with sigstore's cosign. you can verify the signature by downloading the cosign.pub file from this repo and running the following command:  
