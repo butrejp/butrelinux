@@ -23,12 +23,12 @@ local package layering is disabled by default.  use ujust devmode or rpm-ostree 
 
 to rebase an existing bluefin lts or gdx installation to the latest build:
 
-first, clean up all the default gnome junk:
-```flatpak uninstall --all```
-rebase to the unsigned image, to get the proper signing keys and policies installed:
-```rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux:latest```
-wait for the system to reboot, then rebase to the signed image, like so:
-```rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest```
+first, clean up all the default gnome junk:  
+```flatpak uninstall --all```  
+rebase to the unsigned image, to get the proper signing keys and policies installed:  
+```rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux:latest```  
+wait for the system to reboot, then rebase to the signed image, like so:  
+```rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest```  
 
 the latest tag will automatically point to the latest build. that build will still always use the version specified in recipe.yml, so you won't get accidentally updated to the next major version.
 
