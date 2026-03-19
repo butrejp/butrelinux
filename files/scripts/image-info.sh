@@ -3,11 +3,12 @@ set -ouex pipefail
 
 IMAGE_VENDOR="butrejp"
 IMAGE_NAME="butrelinux"
-IMAGE_PRETTY_NAME="butrelinux"
-# For CentOS 10, ID_LIKE should include centos
+IMAGE_PRETTY_NAME="ButreLinux"
+IMAGE_TAG="latest"
 IMAGE_LIKE="centos rhel fedora"
-HOME_URL="https://projectbluefin.io"
-SUPPORT_URL="https://github.com"
+
+HOME_URL="https://github.com/butrejp/butrelinux"
+SUPPORT_URL="https://github.com/butrejp/butrelinux/issues"
 
 # Update the Image Info JSON (used by some uBlue update tools)
 IMAGE_INFO="/usr/share/ublue-os/image-info.json"
@@ -16,7 +17,7 @@ cat >$IMAGE_INFO <<EOF
 {
   "image-name": "$IMAGE_NAME",
   "image-vendor": "$IMAGE_VENDOR",
-  "image-tag":"latest"
+  "image-tag": "$IMAGE_TAG"
 }
 EOF
 
