@@ -40,6 +40,7 @@ modules:
       - sddm
       - sddm-kcm
       - sddm-breeze
+      - polkit-kde
 
       - dolphin                     # file manager
       - kate                        # text editor
@@ -57,6 +58,7 @@ modules:
       - btop
       - nvtop
       - xdg-desktop-portal-kde
+      - powerdevil
 
     remove:
       # Core GNOME components to remove for clean Plasma switch
