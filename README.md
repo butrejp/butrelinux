@@ -41,4 +41,6 @@ the latest tag will automatically point to the latest build. that build will sti
 ## verification
 
 these images are signed with sigstore's cosign. you can verify the signature by downloading the cosign.pub file from this repo and running the following command:  
-```cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux```
+```
+cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux
+```
