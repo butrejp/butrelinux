@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://schema.blue-build.org
+# yaml-language-server: $schema=https://schema.blue-build.org 
 name: butrelinux
 description: Bluefin-GDX with KDE Plasma
 base-image: ghcr.io/ublue-os/bluefin-gdx
@@ -24,7 +24,7 @@ modules:
 
   - type: rpm-ostree
     install:
-      # SELinux/policy utils (your original)
+      # SELinux/policy utils
       - policycoreutils
       - policycoreutils-python-utils
       - policycoreutils-devel
@@ -42,13 +42,13 @@ modules:
       - sddm-breeze
       - polkit-kde
 
-      - dolphin                     # file manager
-      - kate                        # text editor
-      - konsole                     # terminal
-      - kio-admin                   # root file ops in Dolphin
-      - ark                         # archive manager
-      - spectacle                   # screenshots (CLI support)
-      - okular                      # PDF viewer
+      - dolphin
+      - kate
+      - konsole
+      - kio-admin
+      - ark
+      - spectacle
+      - okular
       - plasma-systemmonitor
       - kde-gtk-config
       - breeze-gtk
@@ -65,7 +65,7 @@ modules:
       - tuned-profiles-atomic
 
     remove:
-      # Core GNOME components to remove for clean Plasma switch
+      # Core GNOME components
       - gnome-initial-setup
       - gnome-session-wayland-session
       - gnome-session
@@ -74,6 +74,15 @@ modules:
       - gnome-control-center
       - nautilus
       - ptyxis
+
+  # Fix for tuned-ppd log permissions bug (Bluefin-LTS issue #841)
+  - type: script
+    snippets:
+      - |
+        mkdir -p /var/log/tuned
+        chmod 755 /var/log/tuned
+        touch /var/log/tuned/tuned-ppd.log
+        chmod 644 /var/log/tuned/tuned-ppd.log
 
   - type: kargs
     kargs:
@@ -90,6 +99,7 @@ modules:
       enabled:
         - sddm.service
         - tuned.service
+        - tuned-ppd.service  # Explicitly enable tuned-ppd
       disabled:
         - gdm.service
 
@@ -98,10 +108,10 @@ modules:
       - notify: true
         scope: system
         install:
-          - org.mozilla.firefox          # browser
-          - it.mijorus.gearlever         # AppImage manager
-          - io.github.kolunmi.Bazaar     # Package Manager
-          - org.kde.kcalc                # calculator
+          - org.mozilla.firefox
+          - it.mijorus.gearlever
+          - io.github.kolunmi.Bazaar
+          - org.kde.kcalc
           - com.valvesoftware.Steam
 
   - type: script
