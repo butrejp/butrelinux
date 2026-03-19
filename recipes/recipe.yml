@@ -59,6 +59,7 @@ modules:
       - nvtop
       - xdg-desktop-portal-kde
       - powerdevil
+      - steam
 
     remove:
       # Core GNOME components to remove for clean Plasma switch
@@ -93,8 +94,7 @@ modules:
       - notify: true
         scope: system
         install:
-          - org.mozilla.firefox          # browser – sandboxed Flatpak is great
-          - com.valvesoftware.Steam      # gaming – standard on uBlue
+          - org.mozilla.firefox          # browser
           - it.mijorus.gearlever         # AppImage manager
           - io.github.kolunmi.Bazaar     # Package Manager
           - org.kde.kcalc                # calculator
