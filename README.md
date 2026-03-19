@@ -14,7 +14,7 @@ a bluefin-gdx lts variant with kde plasma 6, for people who want an immutable ce
 - core tools: fastfetch, micro, btop, nvtop
 - distrobox-ready for your actual development environment
 
-local package layering is disabled by default.  use ujust devmode or rpm-ostree install --enable-local-layering if you need it, though the intended workflow is distrobox + flatpaks.
+local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.
 
 ## installation
 
