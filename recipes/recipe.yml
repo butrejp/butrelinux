@@ -41,7 +41,9 @@ modules:
       - sddm-kcm
       - sddm-breeze
       - polkit-kde
-
+      - plasma-nm
+      - plasma-disks
+      
       - dolphin
       - kate
       - konsole
