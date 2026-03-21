@@ -72,6 +72,8 @@ modules:
       - gnome-session-wayland-session
       - gnome-session
       - gnome-shell
+      - gnome-color-manager
+      - gnome-disk-utility
       - gdm
       - gnome-control-center
       - nautilus
