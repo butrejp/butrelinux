@@ -49,7 +49,6 @@ modules:
 
       - plasma-discover
       - plasma-discover-flatpak
-      - plasma-discover-kns
       - plasma-discover-libs
       - plasma-discover-notifier
       - plasma-discover-packagekit  # was omitted for release but there's a bug with kde 6.6
