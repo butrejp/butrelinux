@@ -52,7 +52,7 @@ modules:
       - plasma-discover-kns
       - plasma-discover-libs
       - plasma-discover-notifier
-      #- plasma-discover-packagekit  # intentionally omitted for release 
+      - plasma-discover-packagekit  # was omitted for release but there's a bug with kde 6.6
       - kf6-kirigami
       - kf6-knewstuff
       
