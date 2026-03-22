@@ -43,6 +43,16 @@ modules:
       - polkit-kde
       - plasma-nm
       - plasma-disks
+      - plasma-browser-integration
+      - kde-connect
+      - bluedevil
+
+      - plasma-discover
+      - plasma-discover-flatpak
+      - plasma-discover-kns
+      - plasma-discover-libs
+      - plasma-discover-notifier
+      #- plasma-discover-packagekit  # intentionally omitted for release 
       
       - dolphin
       - kate
