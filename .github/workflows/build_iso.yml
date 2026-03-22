@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo  # Optional but good for any custom files
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build ISO
         uses: jasonn3/build-container-installer@main  # Use @main for latest fixes, or pin to @v1.4.0
