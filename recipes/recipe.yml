@@ -47,13 +47,13 @@ modules:
       - kde-connect
       - bluedevil
 
-      - plasma-discover
-      - plasma-discover-flatpak
-      - plasma-discover-libs
-      - plasma-discover-notifier
-      - plasma-discover-packagekit  # was omitted for release but there's a bug with kde 6.6
-      - kf6-kirigami
-      - kf6-knewstuff
+      #- plasma-discover             # there's a bug with discover in the kde 6.6 repos on centos so I'm gonna just ditch it and keep bazaar for now
+      #- plasma-discover-flatpak
+      #- plasma-discover-libs
+      #- plasma-discover-notifier
+      #- plasma-discover-packagekit  # was omitted for release but there's a bug with kde 6.6
+      #- kf6-kirigami
+      #- kf6-knewstuff
       
       - dolphin
       - kate
