@@ -53,6 +53,8 @@ modules:
       - plasma-discover-libs
       - plasma-discover-notifier
       #- plasma-discover-packagekit  # intentionally omitted for release 
+      - kf6-kirigami
+      - kf6-knewstuff
       
       - dolphin
       - kate
