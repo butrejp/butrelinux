@@ -64,7 +64,7 @@ modules:
       - okular
       - plasma-systemmonitor
       - kde-gtk-config
-      - breeze-gtk
+      #- breeze-gtk #temporary removal, upstream bug on epel
 
       - fastfetch
       - micro
