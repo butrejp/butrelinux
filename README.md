@@ -20,7 +20,7 @@ a bluefin-gdx lts variant with kde plasma 6, for people who want an immutable ce
 local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.
 
 ## installation  
-iso installers are available at [butrelinux.sourceforge.io](https://butrelinux.sourceforge.io)  
+iso installers are available at [butrelinux.sourceforge.io](http://butrelinux.sourceforge.io)  
 latest version download [here](https://sourceforge.net/projects/butrelinux/files/butrelinux-installer-20260506.iso)
 
 alternatively, you can rebase an existing installation using this method:
