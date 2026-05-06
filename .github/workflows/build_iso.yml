@@ -15,14 +15,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y podman
 
+      - name: Prepare directories
+        run: |
+          sudo mkdir -p /var/lib/containers/storage
+          sudo chmod 755 /var/lib/containers/storage
+          mkdir -p $GITHUB_WORKSPACE/output
+
       - name: Pull image into local podman storage
         run: |
-          podman pull ghcr.io/butrejp/butrelinux:latest
+          sudo podman pull ghcr.io/butrejp/butrelinux:latest
 
       - name: Build ISO with bootc-image-builder
         run: |
-          mkdir -p $GITHUB_WORKSPACE/output
-          podman run --rm --privileged --pull=newer \
+          sudo podman run --rm --privileged --pull=newer \
             --security-opt label=type:unconfined_t \
             -v $GITHUB_WORKSPACE/output:/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
@@ -30,6 +35,10 @@ jobs:
             --type iso \
             --target-arch x86_64 \
             ghcr.io/butrejp/butrelinux:latest
+
+      - name: Fix output permissions
+        run: |
+          sudo chown -R $(id -u):$(id -g) $GITHUB_WORKSPACE/output
 
       - name: Locate built ISO
         run: |
