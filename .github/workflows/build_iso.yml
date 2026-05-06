@@ -63,8 +63,7 @@ jobs:
             --iso-name butrelinux-installer.iso \
             --tmp /tmp/iso-build \
             --logfile /tmp/iso-build.log \
-            --resultdir ./results \
-            --image-repo /ostree-repo
+            --resultdir ./results
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
