@@ -16,7 +16,7 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf -y install epel-release
-          dnf -y install podman skopeo rpm-ostree lorax createrepo_c sudo passwd shadow-utils systemd
+          dnf -y install podman skopeo rpm-ostree lorax createrepo_c sudo passwd shadow-utils systemd anaconda anaconda-install-env-deps
           dnf clean all
 
       - name: Prepare container storage (tmpfs)
