@@ -15,31 +15,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y podman
 
-      - name: Prepare directories
+      - name: Prepare directories and config
         run: |
           sudo mkdir -p /var/lib/containers/storage
           sudo chmod 755 /var/lib/containers/storage
           mkdir -p $GITHUB_WORKSPACE/output
 
-      - name: Pull image and fix os-release for bib
+          # Create config.toml with empty kickstart so Anaconda runs interactively
+          cat > $GITHUB_WORKSPACE/config.toml << 'EOF'
+          [customizations.installer.kickstart]
+          contents = """
+          graphical
+          """
+          EOF
+
+      - name: Pull image into local podman storage
         run: |
-          # Pull into local podman storage
           sudo podman pull ghcr.io/butrejp/butrelinux:latest
-
-          # bib derives the distro def from ID+VERSION_ID in /etc/os-release.
-          # Since "butrelinux" isn't known, temporarily spoof it back to the
-          # base distro (centos for CentOS Stream 10; use "rhel" if based on RHEL).
-          sudo podman create --name butrelinux-tmp \
-            --entrypoint /bin/sh \
-            ghcr.io/butrejp/butrelinux:latest \
-            -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
-                sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
-                sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
-
-          sudo podman start butrelinux-tmp
-          sudo podman wait butrelinux-tmp
-          sudo podman commit butrelinux-tmp localhost/butrelinux-fixed:latest
-          sudo podman rm butrelinux-tmp
 
       - name: Build ISO with bootc-image-builder
         run: |
@@ -47,10 +39,12 @@ jobs:
             --security-opt label=type:unconfined_t \
             -v $GITHUB_WORKSPACE/output:/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
+            -v $GITHUB_WORKSPACE/config.toml:/config.toml \
             quay.io/centos-bootc/bootc-image-builder:latest \
-            --type iso \
+            --type anaconda-iso \
             --target-arch x86_64 \
-            localhost/butrelinux-fixed:latest
+            --config /config.toml \
+            ghcr.io/butrejp/butrelinux:latest
 
       - name: Fix output permissions
         run: |
