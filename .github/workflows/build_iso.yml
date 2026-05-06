@@ -29,9 +29,21 @@ jobs:
           """
           EOF
 
-      - name: Pull image into local podman storage
+      - name: Pull image and fix os-release for bib
         run: |
           sudo podman pull ghcr.io/butrejp/butrelinux:latest
+
+          # bib derives the distro def from ID+VERSION_ID in /etc/os-release.
+          # Spoof back to the parent distro so bib can find its templates.
+          sudo podman run --name butrelinux-tmp \
+            --entrypoint /bin/sh \
+            ghcr.io/butrejp/butrelinux:latest \
+            -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
+                sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
+                sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
+
+          sudo podman commit butrelinux-tmp localhost/butrelinux-fixed:latest
+          sudo podman rm butrelinux-tmp
 
       - name: Build ISO with bootc-image-builder
         run: |
@@ -44,7 +56,7 @@ jobs:
             --type anaconda-iso \
             --target-arch x86_64 \
             --config /config.toml \
-            ghcr.io/butrejp/butrelinux:latest
+            localhost/butrelinux-fixed:latest
 
       - name: Fix output permissions
         run: |
