@@ -19,16 +19,19 @@ jobs:
           dnf -y install podman skopeo rpm-ostree lorax createrepo_c sudo passwd shadow-utils systemd
           dnf clean all
 
+      - name: Prepare container storage (tmpfs)
+        run: |
+          mkdir -p /var/lib/containers
+          mount -t tmpfs -o size=30G tmpfs /var/lib/containers
+
       - name: Extract OSTree repo from container image
         run: |
           mkdir -p /ostree-repo
           podman pull ghcr.io/butrejp/butrelinux:latest
           container_id=$(podman create ghcr.io/butrejp/butrelinux:latest)
-          # Only copy the ostree repo (usually under /ostree/repo)
           podman cp $container_id:/ostree/repo/. /ostree-repo/
           podman rm $container_id
 
-      # Step 4: Write generic Kickstart
       - name: Write Kickstart
         run: |-
           cat > butrelinux.ks << 'EOF'
@@ -50,12 +53,12 @@ jobs:
           reboot
           EOF
 
-      # Step 5: Build ISO
       - name: Build ISO
         run: |
           mkdir -p /tmp/iso-build
           livemedia-creator \
             --make-iso \
+            --no-virt \
             --ks butrelinux.ks \
             --iso-name butrelinux-installer.iso \
             --tmp /tmp/iso-build \
@@ -63,7 +66,6 @@ jobs:
             --resultdir ./results \
             --image-repo /ostree-repo
 
-      # Step 6: Upload ISO
       - name: Upload ISO
         uses: actions/upload-artifact@v7
         with:
