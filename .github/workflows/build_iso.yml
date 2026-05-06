@@ -6,30 +6,15 @@ on:
 jobs:
   build-iso:
     runs-on: ubuntu-latest
-    container:
-      image: quay.io/centos/centos:stream10
-      options: --privileged
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Install podman
-        run: |
-          dnf -y install epel-release
-          dnf -y install podman
-          dnf clean all
-
-      - name: Prepare container storage (tmpfs)
-        run: |
-          mkdir -p /var/lib/containers
-          mount -t tmpfs -o size=30G tmpfs /var/lib/containers
-
       - name: Build ISO with bootc-image-builder
         run: |
-          mkdir -p /output
-          podman run --rm --privileged --pull=newer \
-            --security-opt label=type:unconfined_t \
-            -v /output:/output \
+          mkdir -p $GITHUB_WORKSPACE/output
+          docker run --rm --privileged \
+            -v $GITHUB_WORKSPACE/output:/output \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type iso \
             --target-arch x86_64 \
@@ -38,9 +23,9 @@ jobs:
       - name: Locate built ISO
         run: |
           echo "Output directory contents:"
-          find /output -type f -ls || true
+          find $GITHUB_WORKSPACE/output -type f -ls || true
           mkdir -p ./results
-          find /output -name "*.iso" -exec cp {} ./results/butrelinux-installer.iso \;
+          find $GITHUB_WORKSPACE/output -name "*.iso" -exec cp {} ./results/butrelinux-installer.iso \;
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
