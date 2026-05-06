@@ -7,7 +7,7 @@ jobs:
   build-iso:
     runs-on: ubuntu-latest
     container:
-      image: quay.io/centos/centos:stream-10
+      image: quay.io/centos/centos:stream10
       options: --privileged
     steps:
       - name: Checkout repository
