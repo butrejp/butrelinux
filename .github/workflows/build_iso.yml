@@ -1,44 +1,73 @@
 name: Build ButreLinux ISO
 
 on:
-  workflow_dispatch:  # Manual trigger from Actions tab
+  workflow_dispatch:
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+    container:
+      image: quay.io/centos/centos:stream-10
+      options: --privileged
     steps:
-      # Step 1: Checkout the repo (needed if you have other files)
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v6
 
-      # Step 2: Create the libdir template inside the working directory
-      - name: Create libdir template
+      - name: Install build dependencies
         run: |
-          echo '<%\nlibdir = "/usr/lib64"\n%>' > set-libdir.tmpl
+          dnf -y install epel-release
+          dnf -y install podman skopeo rpm-ostree livemedia-creator lorax createrepo_c sudo passwd shadow-utils systemd
+          dnf clean all
 
-      # Step 3: Build the ISO using build-container-installer
+      - name: Extract OSTree repo from container image
+        run: |
+          mkdir -p /ostree-repo
+          podman pull ghcr.io/butrejp/butrelinux:latest
+          container_id=$(podman create ghcr.io/butrejp/butrelinux:latest)
+          # Only copy the ostree repo (usually under /ostree/repo)
+          podman cp $container_id:/ostree/repo/. /ostree-repo/
+          podman rm $container_id
+
+      # Step 4: Write generic Kickstart
+      - name: Write Kickstart
+        run: |
+          cat > butrelinux.ks << 'EOF'
+#version=RHEL10
+lang en_US.UTF-8
+keyboard us
+timezone UTC --isUtc
+skipx
+network --bootproto=dhcp --device=link --activate
+network --hostname=localhost.localdomain
+bootloader --location=mbr --boot-drive=sda
+ostreesetup --nogpg --url=file:///ostree-repo --ref=butrelinux/lts/x86_64 --unified-core
+%packages
+%end
+%post
+passwd -d root
+systemctl enable sshd
+%end
+reboot
+EOF
+
+      # Step 5: Build ISO
       - name: Build ISO
-        uses: jasonn3/build-container-installer@main
-        id: build
-        with:
-          arch: x86_64
-          image_name: butrelinux
-          image_repo: ghcr.io/butrejp
-          image_tag: latest
-          version: 42
-          variant: workstation
-          iso_name: butrelinux-installer.iso
-          additional_templates: "set-libdir.tmpl"
-          # enrollment_password: universalblue  # Uncomment if secure boot
-          # secure_boot_key_url: https://github.com/ublue-os/bazzite/raw/main/secure_boot.der
+        run: |
+          mkdir -p /tmp/iso-build
+          livemedia-creator \
+            --make-iso \
+            --ks butrelinux.ks \
+            --iso-name butrelinux-installer.iso \
+            --tmp /tmp/iso-build \
+            --logfile /tmp/iso-build.log \
+            --resultdir ./results \
+            --image-repo /ostree-repo
 
-      # Step 4: Upload the ISO as an artifact
-      - name: Upload ISO artifact
+      # Step 6: Upload ISO
+      - name: Upload ISO
         uses: actions/upload-artifact@v7
         with:
           name: butrelinux-iso
-          path: |
-            ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}
-            ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM
+          path: ./results/butrelinux-installer.iso
           retention-days: 14
           if-no-files-found: error
