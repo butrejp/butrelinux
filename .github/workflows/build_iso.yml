@@ -30,25 +30,25 @@ jobs:
 
       # Step 4: Write generic Kickstart
       - name: Write Kickstart
-        run: |
+        run: |-
           cat > butrelinux.ks << 'EOF'
-#version=RHEL10
-lang en_US.UTF-8
-keyboard us
-timezone UTC --isUtc
-skipx
-network --bootproto=dhcp --device=link --activate
-network --hostname=localhost.localdomain
-bootloader --location=mbr --boot-drive=sda
-ostreesetup --nogpg --url=file:///ostree-repo --ref=butrelinux/lts/x86_64 --unified-core
-%packages
-%end
-%post
-passwd -d root
-systemctl enable sshd
-%end
-reboot
-EOF
+          #version=RHEL10
+          lang en_US.UTF-8
+          keyboard us
+          timezone UTC --isUtc
+          skipx
+          network --bootproto=dhcp --device=link --activate
+          network --hostname=localhost.localdomain
+          bootloader --location=mbr --boot-drive=sda
+          ostreesetup --nogpg --url=file:///ostree-repo --ref=butrelinux/lts/x86_64 --unified-core
+          %packages
+          %end
+          %post
+          passwd -d root
+          systemctl enable sshd
+          %end
+          reboot
+          EOF
 
       # Step 5: Build ISO
       - name: Build ISO
