@@ -13,10 +13,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Install build dependencies
+      - name: Install podman
         run: |
           dnf -y install epel-release
-          dnf -y install podman skopeo rpm-ostree lorax createrepo_c sudo passwd shadow-utils systemd anaconda anaconda-install-env-deps
+          dnf -y install podman
           dnf clean all
 
       - name: Prepare container storage (tmpfs)
@@ -24,49 +24,23 @@ jobs:
           mkdir -p /var/lib/containers
           mount -t tmpfs -o size=30G tmpfs /var/lib/containers
 
-      - name: Extract OSTree repo from container image
+      - name: Build ISO with bootc-image-builder
         run: |
-          mkdir -p /ostree-repo
-          podman pull ghcr.io/butrejp/butrelinux:latest
-          container_id=$(podman create ghcr.io/butrejp/butrelinux:latest)
-          podman cp $container_id:/ostree/repo/. /ostree-repo/
-          podman rm $container_id
+          mkdir -p /output
+          podman run --rm --privileged --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v /output:/output \
+            quay.io/centos-bootc/bootc-image-builder:latest \
+            --type iso \
+            --target-arch x86_64 \
+            ghcr.io/butrejp/butrelinux:latest
 
-      - name: Write Kickstart
-        run: |-
-          cat > butrelinux.ks << 'EOF'
-          #version=RHEL10
-          lang en_US.UTF-8
-          keyboard us
-          timezone UTC --utc
-          skipx
-          network --bootproto=dhcp --device=link --activate
-          network --hostname=localhost.localdomain
-          bootloader --location=mbr --boot-drive=sda
-          clearpart --all --initlabel
-          part / --fstype=xfs --size=20480
-          ostreesetup --nogpg --osname=butrelinux --url=file:///ostree-repo --ref=butrelinux/lts/x86_64
-          %packages
-          dracut-live
-          %end
-          %post
-          passwd -d root
-          systemctl enable sshd
-          %end
-          reboot
-          EOF
-
-      - name: Build ISO
+      - name: Locate built ISO
         run: |
-          mkdir -p /tmp/iso-build
-          livemedia-creator \
-            --make-iso \
-            --no-virt \
-            --ks butrelinux.ks \
-            --iso-name butrelinux-installer.iso \
-            --tmp /tmp/iso-build \
-            --logfile /tmp/iso-build.log \
-            --resultdir ./results
+          echo "Output directory contents:"
+          find /output -type f -ls || true
+          mkdir -p ./results
+          find /output -name "*.iso" -exec cp {} ./results/butrelinux-installer.iso \;
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
