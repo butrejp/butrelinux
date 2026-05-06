@@ -7,15 +7,16 @@ jobs:
   build-iso:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout the repo (needed if you have other files)
       - name: Checkout repo
         uses: actions/checkout@v6
 
-      # Step 0: Create a small Mako template to define libdir
+      # Step 2: Create the libdir template inside the working directory
       - name: Create libdir template
         run: |
-          mkdir -p .github/lorax-templates
-          echo '<%\nlibdir = "/usr/lib64"\n%>' > .github/lorax-templates/set-libdir.tmpl
+          echo '<%\nlibdir = "/usr/lib64"\n%>' > set-libdir.tmpl
 
+      # Step 3: Build the ISO using build-container-installer
       - name: Build ISO
         uses: jasonn3/build-container-installer@main
         id: build
@@ -27,10 +28,11 @@ jobs:
           version: 42
           variant: workstation
           iso_name: butrelinux-installer.iso
-          additional_templates: ".github/lorax-templates/set-libdir.tmpl"
-          # enrollment_password: universalblue  # Uncomment if you want secure boot
+          additional_templates: "set-libdir.tmpl"
+          # enrollment_password: universalblue  # Uncomment if secure boot
           # secure_boot_key_url: https://github.com/ublue-os/bazzite/raw/main/secure_boot.der
 
+      # Step 4: Upload the ISO as an artifact
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v7
         with:
@@ -38,5 +40,5 @@ jobs:
           path: |
             ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}
             ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM
-          retention-days: 14  # Keep artifacts for 2 weeks
+          retention-days: 14
           if-no-files-found: error
