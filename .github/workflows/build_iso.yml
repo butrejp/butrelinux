@@ -43,7 +43,8 @@ jobs:
           network --bootproto=dhcp --device=link --activate
           network --hostname=localhost.localdomain
           bootloader --location=mbr --boot-drive=sda
-          ostreesetup --nogpg --osname=butrelinux --url=file:///ostree-repo --ref=butrelinux/lts/x86_64 --unified-core
+          autopart
+          ostreesetup --nogpg --osname=butrelinux --url=file:///ostree-repo --ref=butrelinux/lts/x86_64
           %packages
           dracut-live
           %end
