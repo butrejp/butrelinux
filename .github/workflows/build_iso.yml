@@ -13,8 +13,10 @@ jobs:
       - name: Build ISO with bootc-image-builder
         run: |
           mkdir -p $GITHUB_WORKSPACE/output
+          mkdir -p $GITHUB_WORKSPACE/containers/storage
           docker run --rm --privileged \
             -v $GITHUB_WORKSPACE/output:/output \
+            -v $GITHUB_WORKSPACE/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type iso \
             --target-arch x86_64 \
