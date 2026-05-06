@@ -38,13 +38,14 @@ jobs:
           #version=RHEL10
           lang en_US.UTF-8
           keyboard us
-          timezone UTC --isUtc
+          timezone UTC --utc
           skipx
           network --bootproto=dhcp --device=link --activate
           network --hostname=localhost.localdomain
           bootloader --location=mbr --boot-drive=sda
-          ostreesetup --nogpg --url=file:///ostree-repo --ref=butrelinux/lts/x86_64 --unified-core
+          ostreesetup --nogpg --osname=butrelinux --url=file:///ostree-repo --ref=butrelinux/lts/x86_64 --unified-core
           %packages
+          dracut-live
           %end
           %post
           passwd -d root
