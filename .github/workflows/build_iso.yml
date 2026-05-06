@@ -21,9 +21,25 @@ jobs:
           sudo chmod 755 /var/lib/containers/storage
           mkdir -p $GITHUB_WORKSPACE/output
 
-      - name: Pull image into local podman storage
+      - name: Pull image and fix os-release for bib
         run: |
+          # Pull into local podman storage
           sudo podman pull ghcr.io/butrejp/butrelinux:latest
+
+          # bib derives the distro def from ID+VERSION_ID in /etc/os-release.
+          # Since "butrelinux" isn't known, temporarily spoof it back to the
+          # base distro (centos for CentOS Stream 10; use "rhel" if based on RHEL).
+          sudo podman create --name butrelinux-tmp \
+            --entrypoint /bin/sh \
+            ghcr.io/butrejp/butrelinux:latest \
+            -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
+                sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
+                sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
+
+          sudo podman start butrelinux-tmp
+          sudo podman wait butrelinux-tmp
+          sudo podman commit butrelinux-tmp localhost/butrelinux-fixed:latest
+          sudo podman rm butrelinux-tmp
 
       - name: Build ISO with bootc-image-builder
         run: |
@@ -34,7 +50,7 @@ jobs:
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type iso \
             --target-arch x86_64 \
-            ghcr.io/butrejp/butrelinux:latest
+            localhost/butrelinux-fixed:latest
 
       - name: Fix output permissions
         run: |
