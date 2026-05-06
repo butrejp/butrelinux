@@ -18,8 +18,8 @@ jobs:
           image_name: butrelinux
           image_repo: ghcr.io/butrejp
           image_tag: latest
-          version: 10
-          variant: generic  # Try 'workstation' if generic fails with branch error
+          version: 42
+          variant: workstation # Try 'workstation' if generic fails with branch error
           iso_name: butrelinux-installer.iso
           # enrollment_password: universalblue  # Uncomment if you want secure boot enrollment
           # secure_boot_key_url: https://github.com/ublue-os/bazzite/raw/main/secure_boot.der
