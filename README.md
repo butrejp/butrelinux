@@ -1,21 +1,13 @@
 WIP. this is more or less feature-complete with no blocking issues but there are a handful of oddities that are mostly upstream issues on epel.  this is meant to be a personal build but I figure I can't be the only person who wants kde and prefers lts release cycles.  
 
-you must rebase from bluefin-gdx or bluefin-lts, not any fedora version.  this image is based on centos stream 10, not fedora, and cross-rebasing will break things.
+if you use the rebase instructions you must rebase from bluefin-gdx or bluefin-lts, not any fedora version.  this image is based on centos stream 10, not fedora, and cross-rebasing will break things.
 there will be no support on my end.  you're on your own if you install this.  the bluebuild guys or the bluefin guys might be able to help you, but don't count on it.
 
 ![screenshot of desktop and fastfetch](https://repository-images.githubusercontent.com/1181869151/6c7b9e65-ee0f-4e1d-8f30-1460aa6408ca)
 
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml)
 
-a bluefin-gdx lts variant with kde plasma 6, for people who want an immutable centos base with nvidia support and a traditional desktop environment.
-
-## what you get
-
-- kde plasma 6 with wayland
-- nvidia drivers and cuda support (inherited from gdx)
-- flatpaks: firefox, steam, gear lever, bazaar, calculator
-- core tools: fastfetch, micro, btop, nvtop
-- distrobox-ready for your actual development environment
+a bluefin-gdx lts variant with kde plasma 6, for people with psychosis, who wish for centos stream 10 with kde plasma and Nvidia support
 
 local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.
 
