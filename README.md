@@ -1,4 +1,4 @@
-WIP. this is more or less feature-complete with no blocking issues but there are a handful of oddities that are mostly upstream issues on epel.  this is meant to be a personal build but I figure I can't be the only person who wants kde and prefers lts release cycles.  
+WIP (perpetual). this is more or less feature-complete with no blocking issues but there are a handful of oddities that are mostly upstream issues on epel.  this is meant to be a personal build but I figure I can't be the only person who wants kde and prefers lts release cycles.  
 
 if you use the rebase instructions you must rebase from bluefin-gdx or bluefin-lts, not any fedora version.  this image is based on centos stream 10, not fedora, and cross-rebasing will break things.
 there will be no support on my end.  you're on your own if you install this.  the bluebuild guys or the bluefin guys might be able to help you, but don't count on it.
