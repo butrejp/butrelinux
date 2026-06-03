@@ -47,7 +47,6 @@ modules:
       - kde-connect
       - bluedevil
 
-      
       - dolphin
       - kate
       - konsole
@@ -114,6 +113,7 @@ modules:
 
   - type: default-flatpaks
     configurations:
+      # Standard Stable Apps (Uses default Flathub remote)
       - notify: true
         scope: system
         install:
@@ -121,23 +121,27 @@ modules:
           - org.kde.kcalc
           - com.valvesoftware.Steam
 
+      # Flathub Beta Apps
+      - notify: true
+        scope: system
+        repo:
+          url: https://flathub.org/beta-repo/flathub-beta.flatpakrepo
+          name: flathub-beta
+          title: Flathub Beta
+        install:
+          - org.kde.discover:beta
+
   - type: script
     scripts:
       - image-info.sh
 
-      
+  # Keeping your Nvidia environment overrides for Steam
   - type: script
     snippets:
-    - "flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo"
-    - "flatpak install -y flathub-beta org.kde.discover"
-
-      
-  - type: script
-    snippets:
-    - |
-      flatpak override --system --env=__NV_PRIME_RENDER_OFFLOAD=1 \
-        --env=__VK_LAYER_NV_optimus=NVIDIA_only \
-        --env=__GLX_VENDOR_LIBRARY_NAME=nvidia \
-        com.valvesoftware.Steam
+      - |
+        flatpak override --system --env=__NV_PRIME_RENDER_OFFLOAD=1 \
+          --env=__VK_LAYER_NV_optimus=NVIDIA_only \
+          --env=__GLX_VENDOR_LIBRARY_NAME=nvidia \
+          com.valvesoftware.Steam
 
   - type: signing
