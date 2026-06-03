@@ -47,13 +47,6 @@ modules:
       - kde-connect
       - bluedevil
 
-      #- plasma-discover             # there's a bug with discover in the kde 6.6 repos on centos so I'm gonna just ditch it and keep bazaar for now
-      #- plasma-discover-flatpak
-      #- plasma-discover-libs
-      #- plasma-discover-notifier
-      #- plasma-discover-packagekit  # was omitted for release but there's a bug with kde 6.6
-      #- kf6-kirigami
-      #- kf6-knewstuff
       
       - dolphin
       - kate
@@ -64,13 +57,13 @@ modules:
       - okular
       - plasma-systemmonitor
       - kde-gtk-config
-      #- breeze-gtk #temporary removal, upstream bug on epel
 
       - fastfetch
       - micro
       - btop
       - nvtop
       - xdg-desktop-portal-kde
+      - firefox
 
       - powerdevil
       - tuned
@@ -124,15 +117,20 @@ modules:
       - notify: true
         scope: system
         install:
-          - org.mozilla.firefox
           - it.mijorus.gearlever
-          - io.github.kolunmi.Bazaar
           - org.kde.kcalc
           - com.valvesoftware.Steam
 
   - type: script
     scripts:
       - image-info.sh
+
+      
+  - type: script
+    snippets:
+    - "flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo"
+    - "flatpak install -y flathub-beta org.kde.discover"
+
       
   - type: script
     snippets:
