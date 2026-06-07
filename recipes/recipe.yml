@@ -16,11 +16,6 @@ modules:
     snippets:
       - dnf config-manager --set-enabled crb
 
-  - type: dnf
-    install:
-      packages:
-        - /rpms/rpmfusion-free-release-10.noarch.rpm
-        - /rpms/rpmfusion-nonfree-release-10.noarch.rpm
 
   - type: rpm-ostree
     install:
