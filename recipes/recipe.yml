@@ -7,8 +7,6 @@ image-version: lts
 modules:
   - type: files
     files:
-      - source: rpms
-        destination: /rpms
       - source: system
         destination: /
 
