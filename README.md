@@ -5,15 +5,14 @@ there will be no support on my end.  you're on your own if you install this.  th
 
 ![screenshot of desktop and fastfetch](https://repository-images.githubusercontent.com/1181869151/6c7b9e65-ee0f-4e1d-8f30-1460aa6408ca)
 
-# butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml) [![works on my machine badge](https://cdn.jsdelivr.net/gh/nikku/works-on-my-machine@v0.4.0/badge.svg)](https://github.com/nikku/works-on-my-machine)
+# butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml) [![works on my machine badge](https://cdn.jsdelivr.net/gh/nikku/works-on-my-machine@v0.4.0/badge.svg)](https://github.com/nikku/works-on-my-machine) [![Download butrelinux](https://img.shields.io/sourceforge/dt/butrelinux.svg)](https://sourceforge.net/projects/butrelinux/files/latest/download)  
 
 a bluefin-gdx lts variant with kde plasma 6, for people with psychosis, who wish for centos stream 10 with kde plasma and Nvidia support
 
 local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.
 
 ## installation  
-iso installers are available at [butrelinux.sourceforge.io](http://butrelinux.sourceforge.io)  
-latest version download [here](https://sourceforge.net/projects/butrelinux/files/butrelinux-installer-20260506.iso)
+[![Download butrelinux](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/butrelinux/files/latest/download)  
 
 alternatively, you can rebase an existing installation using this method:
 
