@@ -12,6 +12,7 @@ a bluefin-gdx lts variant with kde plasma 6, for people with psychosis, who wish
 local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.
 
 ## installation  
+ISO downloads available here:  
 [![Download butrelinux](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/butrelinux/files/latest/download)  
 
 alternatively, you can rebase an existing installation using this method:
