@@ -9,7 +9,12 @@ there will be no support on my end.  you're on your own if you install this.  th
 
 a bluefin-gdx:lts variant for those who want EL10+KDE and Nvidia/hybrid graphics support
 
-local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.  the ISO is the main installation path, rebase instructions are provided for convenience and reproducability
+local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.  the ISO is the main installation path, rebase instructions are provided for convenience.
+
+ISO images are frozen on the unverified registry and do not receive updates until you rebase to the signed ostree image with  
+```bash
+rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest
+```
 
 ## installation  
 ISO downloads available here:  
