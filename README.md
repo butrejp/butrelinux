@@ -9,9 +9,9 @@ there will be no support on my end.  you're on your own if you install this.  th
 
 a bluefin-gdx:lts variant for those who want EL10+KDE and Nvidia/hybrid graphics support
 
-local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.  the ISO is the main installation path, rebase instructions are provided for convenience.
+local package layering is disabled by default.  you can disable this, though the intended workflow is distrobox + flatpaks.  
 
-ISO images are frozen on the unverified registry and do not receive updates until you rebase to the signed ostree image with  
+the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  ISO images are frozen on the unverified registry and do not receive updates until you rebase to the signed ostree image with  
 ```bash
 rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest
 ```
@@ -20,35 +20,27 @@ rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelin
 ISO downloads available here:  
 [![Download butrelinux](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/butrelinux/files/latest/download)  
 
-alternatively, you can rebase an existing installation using this method:
+## rebase instructions 
 
 > [!WARNING]  
 > [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
 
 to rebase an existing bluefin lts or gdx installation to the latest build:
 
-first, clean up all the default gnome junk:
 ```bash
+# clean up default bluefin flatpaks
 flatpak uninstall --all
-```
-rebase to the unsigned image, to get the proper signing keys and policies installed:
-```bash
+# rebase to the unsigned image, to get the proper signing keys and policies installed:
 rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux:latest
 ```
-wait for the system to reboot, then rebase to the signed image, like so:
+after the system reboots:
 ```bash
+# since our /etc/skel can't touch existing users, copy the default configs to your user profile, or alternatively make your own profile
+mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
+# rebase to the signed image to complete the installation
 rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest
 ```
 
-the latest tag will automatically point to the latest build. that build will still always use the version specified in recipe.yml, so you won't get accidentally updated to the next major version.
-
-## post-rebase setup
-
-since /etc/skel can't touch existing users, copy my kde configuration defaults to your existing user:
-```bash
-mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
-```
-or don't, I'm not your mom.  make whatever config you want
 ## verification
 
 these images are signed with sigstore's cosign. you can verify the signature by downloading the cosign.pub file from this repo and running the following command:  
