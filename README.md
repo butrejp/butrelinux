@@ -35,7 +35,7 @@ rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux
 ```
 after the system reboots:
 ```bash
-# since our /etc/skel can't touch existing users, copy the default configs to your user profile, or alternatively make your own profile
+# since our /etc/skel can't touch existing users, optionally copy the default configs to your user profile
 mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
 # rebase to the signed image to complete the installation
 rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest
