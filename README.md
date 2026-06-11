@@ -23,7 +23,7 @@ rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelin
 ISO downloads available here:  
 [![Download butrelinux](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/butrelinux/files/latest/download)  
 
-## rebase instructions 
+### rebase instructions 
 
 > [!WARNING]  
 > [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
@@ -45,9 +45,23 @@ mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
 rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest
 ```
 
-## verification
+### verification
 
 these images are signed with sigstore's cosign. you can verify the signature by downloading the cosign.pub file from this repo and running the following command:  
 ```
 cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux
 ```
+
+## news
+
+### 20260608 release
+20260608  
+I think this can be considered the first true stable release.  I don't expect to shift things around too much at this stage.  
+the only inclusion left that I don't really like is gearlever and I'm investigating alternatives but unfortunately that one gtk app happens to be the one that works the best.  maybe someday appimagelauncher will be the go to, but not until the next major release at earliest.
+
+### distrowatch
+20260610  
+hey I've got a distrowatch page now.  no idea who submitted it but that's pretty cool.  
+visibility wasn't really the intent, I just wanted something that fit my tastes that I didn't have to remove anything from, only needing to add to it depending on the deployment.  I suppose it's distributed, and that makes it a distro.
+
+https://distrowatch.com/table.php?distribution=butrelinux
