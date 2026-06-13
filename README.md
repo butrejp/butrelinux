@@ -67,6 +67,7 @@ visibility wasn't really the intent, I just wanted something that fit my tastes 
 https://distrowatch.com/table.php?distribution=butrelinux
 
 ### experimental appimage management
-20260613
+20260613  
 I'm leaving gearlever in place for now but you can probably pretend that it's not there from this point forward as I'm integrating zap (or at least attempting to) for appimage management.  we'll see how it goes.  if it's not too buggy then gearlever will be removed in the next ISO build  
-I also changed how tuned log permissions are handled.  should help maybe
+edit: not going great, the database is full of bad links.  it still works fine if you point directly to a github source though.  I'll leave it in place for now, but might experiment with AM instead
+I also changed how tuned log permissions are handled.  should help maybe?
