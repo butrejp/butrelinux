@@ -14,7 +14,6 @@ modules:
     snippets:
       - dnf config-manager --set-enabled crb
 
-
   - type: rpm-ostree
     install:
       # SELinux/policy utils
@@ -77,13 +76,20 @@ modules:
       - ptyxis
 
   # Fix for tuned-ppd log permissions bug (Bluefin-LTS issue #841)
+  # trying tmpfiles method
   - type: script
     snippets:
       - |
-        mkdir -p /var/log/tuned
-        chmod 755 /var/log/tuned
-        touch /var/log/tuned/tuned-ppd.log
-        chmod 644 /var/log/tuned/tuned-ppd.log
+        mkdir -p /usr/lib/tmpfiles.d
+        echo 'd /var/log/tuned 0755 root root -' > /usr/lib/tmpfiles.d/tuned-ppd.conf
+        echo 'f /var/log/tuned/tuned-ppd.log 0644 root root -' >> /usr/lib/tmpfiles.d/tuned-ppd.conf
+#  - type: script
+#    snippets:
+#      - |
+#        mkdir -p /var/log/tuned
+#        chmod 755 /var/log/tuned
+#        touch /var/log/tuned/tuned-ppd.log
+#        chmod 644 /var/log/tuned/tuned-ppd.log
 
   - type: kargs
     kargs:
@@ -100,7 +106,7 @@ modules:
       enabled:
         - sddm.service
         - tuned.service
-        - tuned-ppd.service  # Explicitly enable tuned-ppd
+        - tuned-ppd.service
       disabled:
         - gdm.service
 
@@ -127,8 +133,13 @@ modules:
   - type: script
     scripts:
       - image-info.sh
+  
+  - type: containerfile
+    snippets:
+      - ADD https://github.com/srevinsaju/zap/releases/download/continuous/zap-amd64 /usr/local/bin/zap
+      - RUN chmod +x /usr/local/bin/zap
 
-  # Keeping your Nvidia environment overrides for Steam
+  # environment overrides for steam
   - type: script
     snippets:
       - |
