@@ -65,3 +65,8 @@ hey I've got a distrowatch page now.  no idea who submitted it but that's pretty
 visibility wasn't really the intent, I just wanted something that fit my tastes that I didn't have to remove anything from, only needing to add to it depending on the deployment.  I suppose it's distributed, and that makes it a distro.
 
 https://distrowatch.com/table.php?distribution=butrelinux
+
+### experimental appimage management
+20260613
+I'm leaving gearlever in place for now but you can probably pretend that it's not there from this point forward as I'm integrating zap (or at least attempting to) for appimage management.  we'll see how it goes.  if it's not too buggy then gearlever will be removed in the next ISO build  
+I also changed how tuned log permissions are handled.  should help maybe
