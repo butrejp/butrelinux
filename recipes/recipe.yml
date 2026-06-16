@@ -139,6 +139,10 @@ modules:
       - ADD https://github.com/srevinsaju/zap/releases/download/continuous/zap-amd64 /usr/local/bin/zap
       - RUN chmod +x /usr/local/bin/zap
 
+  - type: soar
+    packages:
+      - soar
+
   # environment overrides for steam
   - type: script
     snippets:
