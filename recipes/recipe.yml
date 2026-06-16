@@ -140,8 +140,7 @@ modules:
       - RUN chmod +x /usr/local/bin/zap
 
   - type: soar
-    packages:
-      - soar
+
 
   # environment overrides for steam
   - type: script
