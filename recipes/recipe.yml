@@ -116,7 +116,7 @@ modules:
       - notify: true
         scope: system
         install:
-          - it.mijorus.gearlever
+          - it.mijorus.gearlever          # mark for deletion
           - org.kde.kcalc
           - com.valvesoftware.Steam
 
@@ -134,7 +134,7 @@ modules:
     scripts:
       - image-info.sh
   
-  - type: containerfile
+  - type: containerfile          # mark for deletion
     snippets:
       - ADD https://github.com/srevinsaju/zap/releases/download/continuous/zap-amd64 /usr/local/bin/zap
       - RUN chmod +x /usr/local/bin/zap
