@@ -51,6 +51,10 @@ these images are signed with sigstore's cosign. you can verify the signature by 
 ```
 cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux
 ```
+if I ever have to update the keys, here's the command to get the right signature.  it happens, dependabot can be fickle
+```
+sudo curl -Lo /etc/pki/containers/butrelinux.pub https://raw.githubusercontent.com/butrejp/butrelinux/refs/heads/main/cosign.pub
+```
 
 ## news
 
@@ -73,3 +77,8 @@ edit: not going great, the database is full of bad links.  it still works fine i
 I also changed how tuned log permissions are handled.  should help maybe?  
 20260616 UPDATE  
 added soar.  left zap in place for now, but it'll be a regression on the next major release
+
+### cosign keys updated
+20260520
+run ```sudo curl -Lo /etc/pki/containers/butrelinux.pub https://raw.githubusercontent.com/butrejp/butrelinux/refs/heads/main/cosign.pub``` to get everything sorted again without having to reinstall  
+a new iso will be published shortly
