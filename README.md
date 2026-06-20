@@ -51,7 +51,7 @@ these images are signed with sigstore's cosign. you can verify the signature by 
 ```
 cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux
 ```
-if I ever have to update the keys, here's the command to get the right signature.  it happens, dependabot can be fickle
+if you ever hit ASN.1 invalid signature failure during an upgrade it's because I rotated out the keys.  sorry.  it was probably dependabot's fault.  you can fetch the new keys with the following command
 ```
 sudo curl -Lo /etc/pki/containers/butrelinux.pub https://raw.githubusercontent.com/butrejp/butrelinux/refs/heads/main/cosign.pub
 ```
