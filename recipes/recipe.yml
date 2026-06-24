@@ -13,7 +13,7 @@ modules:
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
-      - dnf config-manager --add-repo=https://negativo17.org/repos/epel-nvidia.repo
+      - dnf config-manager --add-repo=https://negativo17.org/repos/epel-negativo17.repo
 
   - type: dnf
 
