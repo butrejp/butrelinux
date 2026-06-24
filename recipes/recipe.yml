@@ -13,7 +13,7 @@ modules:
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
-      - dnf install --setopt=localpkg_gpgcheck=1 https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-10.noarch.rpm https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-10.noarch.rpm -y
+      - dnf install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-10.noarch.rpm https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-10.noarch.rpm -y
 
   - type: dnf
     install:
