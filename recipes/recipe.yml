@@ -14,6 +14,26 @@ modules:
     snippets:
       - dnf config-manager --set-enabled crb
 
+  - type: dnf
+    repos:
+      nonfree: negativo17
+    install:
+      packages:
+        - steam
+    remove:
+      packages:
+        # Core GNOME components
+        - gnome-initial-setup
+        - gnome-session-wayland-session
+        - gnome-session
+        - gnome-shell
+        - gnome-color-manager
+        - gnome-disk-utility
+        - gdm
+        - gnome-control-center
+        - nautilus
+        - ptyxis
+
   - type: rpm-ostree
     install:
       # SELinux/policy utils
@@ -48,6 +68,7 @@ modules:
       - okular
       - plasma-systemmonitor
       - kde-gtk-config
+      - kcalc
 
       - fastfetch
       - micro
@@ -61,19 +82,6 @@ modules:
       - tuned-ppd
       - tuned-profiles-atomic
       - lm_sensors
-
-    remove:
-      # Core GNOME components
-      - gnome-initial-setup
-      - gnome-session-wayland-session
-      - gnome-session
-      - gnome-shell
-      - gnome-color-manager
-      - gnome-disk-utility
-      - gdm
-      - gnome-control-center
-      - nautilus
-      - ptyxis
 
   # Fix for tuned-ppd log permissions bug (Bluefin-LTS issue #841)
   # trying tmpfiles method
@@ -112,15 +120,6 @@ modules:
 
   - type: default-flatpaks
     configurations:
-      # Standard Stable Apps (Uses default Flathub remote)
-      - notify: true
-        scope: system
-        install:
-          - it.mijorus.gearlever          # mark for deletion
-          - org.kde.kcalc
-          - com.valvesoftware.Steam
-
-      # Flathub Beta Apps
       - notify: true
         scope: system
         repo:
