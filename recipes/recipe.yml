@@ -13,12 +13,8 @@ modules:
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
-      - dnf install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-10.noarch.rpm https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-10.noarch.rpm -y
 
   - type: dnf
-    install:
-      packages:
-        - steam
     remove:
       packages:
         # Core GNOME components
@@ -83,20 +79,12 @@ modules:
       - lm_sensors
 
   # Fix for tuned-ppd log permissions bug (Bluefin-LTS issue #841)
-  # trying tmpfiles method
   - type: script
     snippets:
       - |
         mkdir -p /usr/lib/tmpfiles.d
         echo 'd /var/log/tuned 0755 root root -' > /usr/lib/tmpfiles.d/tuned-ppd.conf
         echo 'f /var/log/tuned/tuned-ppd.log 0644 root root -' >> /usr/lib/tmpfiles.d/tuned-ppd.conf
-#  - type: script
-#    snippets:
-#      - |
-#        mkdir -p /var/log/tuned
-#        chmod 755 /var/log/tuned
-#        touch /var/log/tuned/tuned-ppd.log
-#        chmod 644 /var/log/tuned/tuned-ppd.log
 
   - type: kargs
     kargs:
@@ -138,15 +126,4 @@ modules:
       - RUN chmod +x /usr/local/bin/zap
 
   - type: soar
-
-
-  # environment overrides for steam
-  - type: script
-    snippets:
-      - |
-        flatpak override --system --env=__NV_PRIME_RENDER_OFFLOAD=1 \
-          --env=__VK_LAYER_NV_optimus=NVIDIA_only \
-          --env=__GLX_VENDOR_LIBRARY_NAME=nvidia \
-          com.valvesoftware.Steam
-
   - type: signing
