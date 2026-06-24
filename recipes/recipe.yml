@@ -13,13 +13,12 @@ modules:
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
-      - dnf config-manager --add-repo=https://negativo17.org/repos/epel-negativo17.repo
 
   - type: dnf
 
     install:
       packages:
-        - steam
+        - https://negativo17.org/repos/steam/fedora-44/x86_64/steam-1.0.0.86-1.fc44.x86_64.rpm
     remove:
       packages:
         # Core GNOME components
