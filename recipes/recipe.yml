@@ -14,6 +14,8 @@ modules:
     snippets:
       - dnf config-manager --set-enabled crb
       - dnf config-manager --add-repo=https://negativo17.org/repos/epel-negativo17.repo
+      - dnf install epel-release -y
+      - dnf install --setopt=localpkg_gpgcheck=1 https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-44.noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-44.noarch.rpm
 
   - type: dnf
     repos:
