@@ -79,6 +79,12 @@ I also changed how tuned log permissions are handled.  should help maybe?
 added soar.  left zap in place for now, but it'll be a regression on the next major release
 
 ### cosign keys updated
-20260520
+20260520  
 run ```sudo curl -Lo /etc/pki/containers/butrelinux.pub https://raw.githubusercontent.com/butrejp/butrelinux/refs/heads/main/cosign.pub``` to get everything sorted again without having to reinstall  
-a new iso will be published shortly
+a new iso will be published shortly (done)
+
+### big reorganization
+20260708  
+https://docs.projectbluefin.io/blog/2026/07/02/organizational-migration-for-bluefin-lts-gdx/  
+bluefin is reorganizing and the old bluefin-gdx is getting discontinued, meaning my previous upstream is getting discontinued.  the standard gdx:lts image is staying and will keep building if you want to keep using it, but all work is moving towards the new images, so the day butrelinux:latest stops building is the day it's done.  butrelinux-hwe and butrelinux-nvidia is the new hotness.  new isos will hopefully be built this week.  just bootc switch in the mean time
+also, I decided to use this as an opportunity to break out a standard installation and an nvidia installation.  have fun with that amd users
