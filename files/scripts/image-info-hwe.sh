@@ -18,14 +18,14 @@ cat >$IMAGE_INFO <<EOF
   "image-name": "$IMAGE_NAME-hwe",
   "image-vendor": "$IMAGE_VENDOR",
   "image-tag": "$IMAGE_TAG",
-  "image-ref": "ostree-image-signed:docker://ghcr.io/$IMAGE_VENDOR/$IMAGE_NAME"
+  "image-ref": "ostree-image-signed:docker://ghcr.io/$IMAGE_VENDOR/$IMAGE_NAME-hwe"
 }
 EOF
 
 # Edit /usr/lib/os-release using sed
 # We use "|" as a delimiter in sed to avoid issues with "/" in URLs
 sed -i "s|^VARIANT_ID=.*|VARIANT_ID=gdx|" /usr/lib/os-release
-sed -i "s|^PRETTY_NAME=.*|PRETTY_NAME=\"$IMAGE_PRETTY_NAME (Bluefin GDX LTS)\"|" /usr/lib/os-release
+sed -i "s|^PRETTY_NAME=.*|PRETTY_NAME=\"$IMAGE_PRETTY_NAME\"|" /usr/lib/os-release
 sed -i "s|^NAME=.*|NAME=\"$IMAGE_PRETTY_NAME\"|" /usr/lib/os-release
 sed -i "s|^ID=.*|ID=$IMAGE_NAME|" /usr/lib/os-release
 sed -i "s|^ID_LIKE=.*|ID_LIKE=\"$IMAGE_LIKE\"|" /usr/lib/os-release
