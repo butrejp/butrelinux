@@ -88,3 +88,5 @@ a new iso will be published shortly (done)
 https://docs.projectbluefin.io/blog/2026/07/02/organizational-migration-for-bluefin-lts-gdx/  
 bluefin is reorganizing and the old bluefin-gdx is getting discontinued, meaning my previous upstream is getting discontinued.  the standard gdx:lts image is staying and will keep building if you want to keep using it, but all work is moving towards the new images, so the day butrelinux:latest stops building is the day it's done.  butrelinux-hwe and butrelinux-nvidia is the new hotness.  new isos will hopefully be built this week.  just bootc switch or rpm-ostree rebase in the mean time if you want to try it, but for now I recommend sticking with the old version, as new just isn't stable yet.  
 also, I decided to use this as an opportunity to break out a standard installation and an nvidia installation.  have fun with that amd users
+> [!WARNING]  
+> [This is an alpha release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha).  when upstream stabilizes, I'll stabilize.
