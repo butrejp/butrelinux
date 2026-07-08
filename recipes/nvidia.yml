@@ -34,8 +34,7 @@ modules:
         - policycoreutils-devel
         - selinux-policy-targeted
         - libsemanage
-        - fuse
-        - fuse-libs
+
 
         - plasma-desktop
         - plasma-workspace-wayland
