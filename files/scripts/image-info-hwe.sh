@@ -18,7 +18,7 @@ cat >$IMAGE_INFO <<EOF
   "image-name": "$IMAGE_NAME-hwe",
   "image-vendor": "$IMAGE_VENDOR",
   "image-tag": "$IMAGE_TAG",
-  "image-ref": "ostree-image-signed:docker://ghcr.io/$IMAGE_VENDOR/$IMAGE_NAMEe"
+  "image-ref": "ostree-image-signed:docker://ghcr.io/$IMAGE_VENDOR/$IMAGE_NAME"
 }
 EOF
 
