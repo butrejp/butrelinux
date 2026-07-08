@@ -34,6 +34,8 @@ modules:
         - policycoreutils-devel
         - selinux-policy-targeted
         - libsemanage
+        - fuse
+        - fuse-libs
 
         - plasma-desktop
         - plasma-workspace-wayland
@@ -102,12 +104,7 @@ modules:
 
   - type: script
     scripts:
-      - image-info.sh
+      - image-info-hwe.sh
   
-  - type: containerfile          # mark for deletion
-    snippets:
-      - ADD https://github.com/srevinsaju/zap/releases/download/continuous/zap-amd64 /usr/local/bin/zap
-      - RUN chmod +x /usr/local/bin/zap
-
   - type: soar
   - type: signing
