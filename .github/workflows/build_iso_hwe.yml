@@ -37,12 +37,12 @@ jobs:
           # Spoof back to the parent distro so bib can find its templates.
           sudo podman run --name butrelinux-tmp \
             --entrypoint /bin/sh \
-            ghcr.io/butrejp/butrelinux:latest \
+            ghcr.io/butrejp/butrelinux-hwe:latest \
             -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
                 sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
                 sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
 
-          sudo podman commit butrelinux-tmp localhost/butrelinux-hwe-fixed:latest
+          sudo podman commit butrelinux-tmp localhost/butrelinux-hwe:latest
           sudo podman rm butrelinux-tmp
 
       - name: Build ISO with bootc-image-builder
@@ -56,7 +56,7 @@ jobs:
             --type anaconda-iso \
             --target-arch x86_64 \
             --config /config.toml \
-            localhost/butrelinux-hwe-fixed:latest
+            localhost/butrelinux-hwe:latest
 
       - name: Fix output permissions
         run: |
