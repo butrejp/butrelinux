@@ -1,4 +1,4 @@
-name: Build ButreLinux ISO
+name: Build ButreLinux ISO - legacy
 
 on:
   workflow_dispatch:
