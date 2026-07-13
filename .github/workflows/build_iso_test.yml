@@ -34,38 +34,59 @@ jobs:
           """
           EOF
 
-      - name: Pull image and fix os-release for bib
+      - name: Install dependencies for ISO generation
         run: |
-          IMAGE="ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest"
-          sudo podman pull "$IMAGE"
-
-          sudo podman run --name butrelinux-tmp \
-            --entrypoint /bin/sh \
-            "$IMAGE" \
-            -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
-                sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
-                sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
-
-          # 1. Commit OVER the real URL tag locally, instead of to localhost/
-          sudo podman commit butrelinux-tmp "$IMAGE"
-          sudo podman rm butrelinux-tmp
-
-      - name: Build ISO with bootc-image-builder
+          sudo apt-get update
+          # Install lorax/mkksiso (might require using a containerized version of lorax 
+          # if not natively available on Ubuntu, but here is the logic)
+          sudo podman pull quay.io/centos/centos:stream10
+          
+      - name: Prepare Kickstart with Cosign Verification
         run: |
-          IMAGE="ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest"
-          sudo podman run --rm --privileged --pull=newer \
-            --security-opt label=type:unconfined_t \
-            -v $GITHUB_WORKSPACE/output:/output \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            -v $GITHUB_WORKSPACE/config.toml:/config.toml \
-            quay.io/centos-bootc/bootc-image-builder:latest \
-            --type anaconda-iso \
-            --target-arch x86_64 \
-            --config /config.toml \
-            --local \
-            "$IMAGE" 
-          # 2. --local forces the builder to use your spoofed local image, 
-          # but the output ISO is still hardcoded to look for updates at $IMAGE
+          cat > $GITHUB_WORKSPACE/ks.cfg << 'EOF'
+          graphical
+          network --bootproto=dhcp --device=link --activate
+          
+          # Tell Anaconda to install your container directly from the registry
+          ostreecontainer --url=ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
+          
+          # Inject Cosign policy BEFORE the install begins
+          %pre --erroronfail
+          mkdir -p /etc/containers
+          mkdir -p /etc/pki/containers
+          
+          cat > /etc/containers/policy.json << 'POLICY'
+          {
+            "default": [{"type": "insecureAcceptAnything"}],
+            "transports": {
+              "docker": {
+                "ghcr.io/butrejp": [
+                  {
+                    "type": "sigstoreSigned",
+                    "keyPath": "/etc/pki/containers/butrelinux-pub.gpg",
+                    "signedIdentity": {"type": "matchRepository"}
+                  }
+                ]
+              }
+            }
+          }
+          POLICY
+          
+          # Your public key
+          cat > /etc/pki/containers/butrelinux-pub.gpg << 'KEY'
+          ${{ secrets.BUTRELINUX_PUBLIC_KEY }}
+          KEY
+          %end
+          EOF
+
+      - name: Generate Custom Installer ISO
+        run: |
+          # Download the standard CS10 Boot ISO
+          curl -L -o cs10-boot.iso "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+          
+          # Use a CentOS container to run mkksiso, injecting your Kickstart
+          sudo podman run --rm -v $GITHUB_WORKSPACE:/work:z quay.io/centos/centos:stream10 \
+            /bin/bash -c "dnf install -y lorax && mkksiso /work/ks.cfg /work/cs10-boot.iso /work/output/butrelinux-${{ matrix.variant }}.iso"
 
       - name: Fix output permissions
         run: |
