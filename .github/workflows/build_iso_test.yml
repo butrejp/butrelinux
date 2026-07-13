@@ -1,0 +1,87 @@
+name: Build butrelinux ISO
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [hwe, nvidia]
+    steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Prepare directories and config
+        run: |
+          sudo mkdir -p /var/lib/containers/storage
+          sudo chmod 755 /var/lib/containers/storage
+          mkdir -p $GITHUB_WORKSPACE/output
+
+          cat > $GITHUB_WORKSPACE/config.toml << 'EOF'
+          [customizations.installer.kickstart]
+          contents = """
+          graphical
+          """
+          EOF
+
+      - name: Pull image and fix os-release for bib
+        run: |
+          IMAGE="ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest"
+          sudo podman pull "$IMAGE"
+
+          sudo podman run --name butrelinux-tmp \
+            --entrypoint /bin/sh \
+            "$IMAGE" \
+            -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
+                sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
+                sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
+
+          # 1. Commit OVER the real URL tag locally, instead of to localhost/
+          sudo podman commit butrelinux-tmp "$IMAGE"
+          sudo podman rm butrelinux-tmp
+
+      - name: Build ISO with bootc-image-builder
+        run: |
+          IMAGE="ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest"
+          sudo podman run --rm --privileged --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v $GITHUB_WORKSPACE/output:/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            -v $GITHUB_WORKSPACE/config.toml:/config.toml \
+            quay.io/centos-bootc/bootc-image-builder:latest \
+            --type anaconda-iso \
+            --target-arch x86_64 \
+            --config /config.toml \
+            --local \
+            "$IMAGE" 
+          # 2. --local forces the builder to use your spoofed local image, 
+          # but the output ISO is still hardcoded to look for updates at $IMAGE
+
+      - name: Fix output permissions
+        run: |
+          sudo chown -R $(id -u):$(id -g) $GITHUB_WORKSPACE/output
+
+      - name: Locate built ISO
+        run: |
+          echo "Output directory contents:"
+          find $GITHUB_WORKSPACE/output -type f -ls || true
+          mkdir -p ./results
+          find $GITHUB_WORKSPACE/output -name "*.iso" -exec cp {} ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso \;
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v7
+        with:
+          name: butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}-iso
+          path: ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso
+          retention-days: 14
+          if-no-files-found: error
