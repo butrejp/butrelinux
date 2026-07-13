@@ -43,18 +43,14 @@ jobs:
           
       - name: Prepare Kickstart with Cosign Verification
         run: |
-          # Read the pubkey from the root of your repo
           PUBKEY=$(cat $GITHUB_WORKSPACE/cosign.pub)
-          
-          # Use unquoted EOF so bash expands $PUBKEY
           cat > $GITHUB_WORKSPACE/ks.cfg << EOF
           graphical
           network --bootproto=dhcp --device=link --activate
-          
           ostreecontainer --url=ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
           
           %pre --erroronfail
-          mkdir -p /etc/containers
+          mkdir -p /etc/containers/registries.d
           mkdir -p /etc/pki/containers
           
           cat > /etc/containers/policy.json << 'POLICY'
@@ -74,15 +70,21 @@ jobs:
           }
           POLICY
           
+          cat > /etc/containers/registries.d/butrelinux.yaml << 'REGISTRY'
+          docker:
+            ghcr.io/butrejp:
+              sigstore: true
+          REGISTRY
+          
           cat > /etc/pki/containers/cosign.pub << 'KEY'
           ${PUBKEY}
           KEY
-
-          # FORCE the installer to see our custom policy
+          
           echo "export CONTAINERS_POLICY=/etc/containers/policy.json" >> /etc/bashrc
-          # Some versions of the ostree-container stack also check this:
           echo "export CONTAINERS_CONF=/etc/containers/policy.json" >> /etc/bashrc
           %end
+          EOF
+
 
       - name: Initialize loop devices on GitHub runner
         run: |
