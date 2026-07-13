@@ -73,7 +73,7 @@ jobs:
           cat > /etc/containers/registries.d/butrelinux.yaml << 'REGISTRY'
           docker:
             ghcr.io/butrejp:
-              sigstore: https://ghcr.io/v2/butrejp
+              use-sigstore-attachments: true
           REGISTRY
           
           cat > /etc/pki/containers/cosign.pub << 'KEY'
