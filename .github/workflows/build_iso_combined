@@ -1,4 +1,4 @@
-name: Build butrelinux-nvidia ISO
+name: Build butrelinux ISO
 
 on:
   workflow_dispatch:
@@ -6,7 +6,13 @@ on:
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [hwe, nvidia]
     steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v7
 
@@ -21,7 +27,6 @@ jobs:
           sudo chmod 755 /var/lib/containers/storage
           mkdir -p $GITHUB_WORKSPACE/output
 
-          # Create config.toml with empty kickstart so Anaconda runs interactively
           cat > $GITHUB_WORKSPACE/config.toml << 'EOF'
           [customizations.installer.kickstart]
           contents = """
@@ -31,18 +36,17 @@ jobs:
 
       - name: Pull image and fix os-release for bib
         run: |
-          sudo podman pull ghcr.io/butrejp/butrelinux-nvidia:latest
+          IMAGE="ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest"
+          sudo podman pull "$IMAGE"
 
-          # bib derives the distro def from ID+VERSION_ID in /etc/os-release.
-          # Spoof back to the parent distro so bib can find its templates.
           sudo podman run --name butrelinux-tmp \
             --entrypoint /bin/sh \
-            ghcr.io/butrejp/butrelinux-nvidia:latest \
+            "$IMAGE" \
             -c "sed -i 's/^ID=.*/ID=centos/' /etc/os-release && \
                 sed -i 's/^NAME=.*/NAME=\"CentOS Stream\"/' /etc/os-release && \
                 sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME=\"CentOS Stream 10\"/' /etc/os-release"
 
-          sudo podman commit butrelinux-tmp localhost/butrelinux-nvidia:latest
+          sudo podman commit butrelinux-tmp localhost/butrelinux-${{ matrix.variant }}:latest
           sudo podman rm butrelinux-tmp
 
       - name: Build ISO with bootc-image-builder
@@ -56,7 +60,7 @@ jobs:
             --type anaconda-iso \
             --target-arch x86_64 \
             --config /config.toml \
-            localhost/butrelinux-nvidia:latest
+            localhost/butrelinux-${{ matrix.variant }}:latest
 
       - name: Fix output permissions
         run: |
@@ -67,12 +71,12 @@ jobs:
           echo "Output directory contents:"
           find $GITHUB_WORKSPACE/output -type f -ls || true
           mkdir -p ./results
-          find $GITHUB_WORKSPACE/output -name "*.iso" -exec cp {} ./results/butrelinux-nvidia-installer.iso \;
+          find $GITHUB_WORKSPACE/output -name "*.iso" -exec cp {} ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso \;
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
         with:
-          name: butrelinux-iso
-          path: ./results/butrelinux-nvidia-installer.iso
+          name: butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}-iso
+          path: ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso
           retention-days: 14
           if-no-files-found: error
