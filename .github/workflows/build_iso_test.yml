@@ -46,7 +46,7 @@ jobs:
           # Read the pubkey from the root of your repo
           PUBKEY=$(cat $GITHUB_WORKSPACE/cosign.pub)
           
-          # Use unquoted EOF so bash expands $PUBKEY and ${{ matrix.variant }}
+          # Use unquoted EOF so bash expands $PUBKEY
           cat > $GITHUB_WORKSPACE/ks.cfg << EOF
           graphical
           network --bootproto=dhcp --device=link --activate
@@ -57,7 +57,6 @@ jobs:
           mkdir -p /etc/containers
           mkdir -p /etc/pki/containers
           
-          # Write the policy.json (Using 'POLICY' avoids expanding any JSON syntax)
           cat > /etc/containers/policy.json << 'POLICY'
           {
             "default": [{"type": "insecureAcceptAnything"}],
@@ -75,12 +74,15 @@ jobs:
           }
           POLICY
           
-          # Inject the public key string we grabbed earlier
           cat > /etc/pki/containers/cosign.pub << 'KEY'
-          $PUBKEY
+          ${PUBKEY}
           KEY
+
+          # FORCE the installer to see our custom policy
+          echo "export CONTAINERS_POLICY=/etc/containers/policy.json" >> /etc/bashrc
+          # Some versions of the ostree-container stack also check this:
+          echo "export CONTAINERS_CONF=/etc/containers/policy.json" >> /etc/bashrc
           %end
-          EOF
 
       - name: Initialize loop devices on GitHub runner
         run: |
