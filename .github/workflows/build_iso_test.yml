@@ -79,13 +79,31 @@ jobs:
           %end
           EOF
 
+      - name: Initialize loop devices on GitHub runner
+        run: |
+          # Load the loop kernel module
+          sudo modprobe loop
+          
+          # Force the creation of the loop control node and default loop devices if missing
+          sudo mknod /dev/loop-control c 10 237 || true
+          for i in {0..7}; do
+            sudo mknod /dev/loop$i b 7 $i || true
+          done
+          
+          # Verify a loop device is available
+          sudo losetup -f
+
+
       - name: Generate Custom Installer ISO
         run: |
-          # Download the standard CS10 Boot ISO
           curl -L -o cs10-boot.iso "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
           
-          # Use a CentOS container to run mkksiso, injecting your Kickstart
-          sudo podman run --rm -v $GITHUB_WORKSPACE:/work:z quay.io/centos/centos:stream10 \
+          # Use a privileged CentOS container with the host's initialized /dev
+          sudo podman run --rm \
+            --privileged \
+            -v /dev:/dev \
+            -v $GITHUB_WORKSPACE:/work:z \
+            quay.io/centos/centos:stream10 \
             /bin/bash -c "dnf install -y lorax && mkksiso /work/ks.cfg /work/cs10-boot.iso /work/output/butrelinux-${{ matrix.variant }}.iso"
 
       - name: Fix output permissions
