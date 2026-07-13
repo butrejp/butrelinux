@@ -43,18 +43,21 @@ jobs:
           
       - name: Prepare Kickstart with Cosign Verification
         run: |
-          cat > $GITHUB_WORKSPACE/ks.cfg << 'EOF'
+          # Read the pubkey from the root of your repo
+          PUBKEY=$(cat $GITHUB_WORKSPACE/cosign.pub)
+          
+          # Use unquoted EOF so bash expands $PUBKEY and ${{ matrix.variant }}
+          cat > $GITHUB_WORKSPACE/ks.cfg << EOF
           graphical
           network --bootproto=dhcp --device=link --activate
           
-          # Tell Anaconda to install your container directly from the registry
           ostreecontainer --url=ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
           
-          # Inject Cosign policy BEFORE the install begins
           %pre --erroronfail
           mkdir -p /etc/containers
           mkdir -p /etc/pki/containers
           
+          # Write the policy.json (Using 'POLICY' avoids expanding any JSON syntax)
           cat > /etc/containers/policy.json << 'POLICY'
           {
             "default": [{"type": "insecureAcceptAnything"}],
@@ -63,7 +66,7 @@ jobs:
                 "ghcr.io/butrejp": [
                   {
                     "type": "sigstoreSigned",
-                    "keyPath": "/etc/pki/containers/butrelinux-pub.gpg",
+                    "keyPath": "/etc/pki/containers/cosign.pub",
                     "signedIdentity": {"type": "matchRepository"}
                   }
                 ]
@@ -72,9 +75,9 @@ jobs:
           }
           POLICY
           
-          # Your public key
-          cat > /etc/pki/containers/butrelinux-pub.gpg << 'KEY'
-          ${{ secrets.BUTRELINUX_PUBLIC_KEY }}
+          # Inject the public key string we grabbed earlier
+          cat > /etc/pki/containers/cosign.pub << 'KEY'
+          $PUBKEY
           KEY
           %end
           EOF
