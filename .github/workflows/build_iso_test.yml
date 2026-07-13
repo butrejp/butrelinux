@@ -73,7 +73,7 @@ jobs:
           cat > /etc/containers/registries.d/butrelinux.yaml << 'REGISTRY'
           docker:
             ghcr.io/butrejp:
-              sigstore: true
+              sigstore: https://ghcr.io/v2/butrejp
           REGISTRY
           
           cat > /etc/pki/containers/cosign.pub << 'KEY'
@@ -81,7 +81,6 @@ jobs:
           KEY
           
           echo "export CONTAINERS_POLICY=/etc/containers/policy.json" >> /etc/bashrc
-          echo "export CONTAINERS_CONF=/etc/containers/policy.json" >> /etc/bashrc
           %end
           EOF
 
