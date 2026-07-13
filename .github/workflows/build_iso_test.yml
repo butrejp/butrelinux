@@ -37,8 +37,6 @@ jobs:
       - name: Install dependencies for ISO generation
         run: |
           sudo apt-get update
-          # Install lorax/mkksiso (might require using a containerized version of lorax 
-          # if not natively available on Ubuntu, but here is the logic)
           sudo podman pull quay.io/centos/centos:stream10
           
       - name: Prepare Kickstart with Cosign Verification
@@ -87,16 +85,12 @@ jobs:
 
       - name: Initialize loop devices on GitHub runner
         run: |
-          # Load the loop kernel module
           sudo modprobe loop
-          
-          # Force the creation of the loop control node and default loop devices if missing
           sudo mknod /dev/loop-control c 10 237 || true
           for i in {0..7}; do
             sudo mknod /dev/loop$i b 7 $i || true
           done
-          
-          # Verify a loop device is available
+
           sudo losetup -f
 
 
