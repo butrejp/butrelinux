@@ -21,22 +21,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y podman
 
-      - name: Prepare directories and config
+      - name: Prepare results directory
         run: |
           sudo mkdir -p /var/lib/containers/storage
           sudo chmod 755 /var/lib/containers/storage
-          mkdir -p $GITHUB_WORKSPACE/output
+          mkdir -p $GITHUB_WORKSPACE/results
 
-          cat > $GITHUB_WORKSPACE/config.toml << 'EOF'
-          [customizations.installer.kickstart]
-          contents = """
-          graphical
-          """
-          EOF
-
-      - name: Install dependencies for ISO generation
-        run: |
-          sudo podman pull quay.io/centos/centos:stream10
+      - name: Pull base installer image
+        run: sudo podman pull quay.io/centos/centos:stream10
           
       - name: Prepare Kickstart with Cosign Verification
         run: |
@@ -97,31 +89,20 @@ jobs:
           for i in {0..7}; do
             sudo mknod /dev/loop$i b 7 $i || true
           done
-
           sudo losetup -f
 
       - name: Generate Custom Installer ISO
         run: |
           curl -L -o cs10-boot.iso "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
-          
-          # Use a privileged CentOS container with the host's initialized /dev
           sudo podman run --rm \
             --privileged \
             -v /dev:/dev \
             -v $GITHUB_WORKSPACE:/work:z \
             quay.io/centos/centos:stream10 \
-            /bin/bash -c "dnf install -y lorax && mkksiso /work/ks.cfg /work/cs10-boot.iso /work/output/butrelinux-${{ matrix.variant }}.iso"
+            /bin/bash -c "dnf install -y lorax && mkksiso /work/ks.cfg /work/cs10-boot.iso /work/results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso"
 
       - name: Fix output permissions
-        run: |
-          sudo chown -R $(id -u):$(id -g) $GITHUB_WORKSPACE/output
-
-      - name: Locate built ISO
-        run: |
-          echo "Output directory contents:"
-          find $GITHUB_WORKSPACE/output -type f -ls || true
-          mkdir -p ./results
-          find $GITHUB_WORKSPACE/output -name "*.iso" -exec cp {} ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso \;
+        run: sudo chown -R $(id -u):$(id -g) $GITHUB_WORKSPACE/results
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
