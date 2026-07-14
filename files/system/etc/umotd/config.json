@@ -1,0 +1,39 @@
+{
+  "commands": [
+    {
+      "cmd": "umotd toggle",
+      "desc": "motd_toggle"
+    },
+    {
+      "cmd": "brew help",
+      "desc": "cli_pkg"
+    }
+  ],
+  "links": [
+    {
+      "name": "Github",
+      "url": "https://github.com/butrejp/butrelinux"
+    },
+    {
+      "name": "Docs",
+      "url": "https://github.com/butrejp/butrelinux/wiki"
+    },
+    {
+      "name": "Sourceforge",
+      "url": "https://butrelinux.sourceforge.io/"
+    }
+    {
+      "name": "Issues",
+      "url": "https://github.com/butrejp/butrelinux/issues"
+    }
+  ],
+  "prefix": "󱍢 ",
+  "tips": ["Develop with devcontainers! Use `devcontainer.json` files in your projects for isolated, reproducible environments",
+"Performance profiling tools are built-in: try `sysprof`, `bpftrace`, and other debugging tools",
+"Switch shells safely: change your shell in Terminal settings instead of system-wide",
+"Container development is OS-agnostic - your devcontainers work on Linux, macOS, and Windows",
+"Use `docker compose` for multi-container development if devcontainers don't fit your workflow",
+"Enable local layering with `givemethekeys` (coming soon)"],
+  "tips-presets": ["kde"],
+  "use-accent-color": true
+}
