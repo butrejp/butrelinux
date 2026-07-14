@@ -46,6 +46,7 @@ jobs:
           graphical
           network --bootproto=dhcp --device=link --activate
           services --disabled=kdump
+
           ostreecontainer --url=ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
           
           %pre --erroronfail
@@ -85,9 +86,10 @@ jobs:
           %post --erroronfail
           sed -i 's/crashkernel=[^ ]*//g' /etc/default/grub
           grub2-mkconfig -o /boot/grub2/grub.cfg
+          groupadd -f plugdev
+          systemctl disable systemd-oomd.service
           %end
           EOF
-
 
       - name: Initialize loop devices on GitHub runner
         run: |
@@ -98,7 +100,6 @@ jobs:
           done
 
           sudo losetup -f
-
 
       - name: Generate Custom Installer ISO
         run: |
@@ -126,7 +127,33 @@ jobs:
       - name: Upload ISO
         uses: actions/upload-artifact@v7
         with:
-          name: butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}-iso
+          name: butrelinux-${{ matrix.variant }}-iso
           path: ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso
           retention-days: 14
           if-no-files-found: error
+
+  package-isos:
+    needs: build-iso
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Download ISO artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: butrelinux-*-iso
+          path: downloaded-isos
+          merge-multiple: true
+
+      - name: Create Unified Zip
+        run: |
+          cd downloaded-isos
+          zip -j ../butrelinux-all-variants-${{ env.BUILD_DATE }}.zip *.iso
+
+      - name: Upload Final Zip Bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: butrelinux-complete-release-${{ env.BUILD_DATE }}
+          path: butrelinux-all-variants-${{ env.BUILD_DATE }}.zip
+          retention-days: 14
