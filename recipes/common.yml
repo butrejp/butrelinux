@@ -1,5 +1,4 @@
-#this doesn't do anything yet.  I need to find an example of a recipe that uses a common file before implementing.
-
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 modules:
   - type: files
     files:
@@ -30,8 +29,6 @@ modules:
         - policycoreutils-devel
         - selinux-policy-targeted
         - libsemanage
-
-
         - plasma-desktop
         - plasma-workspace-wayland
         - kde-settings-plasma
@@ -46,7 +43,6 @@ modules:
         - plasma-browser-integration
         - kde-connect
         - bluedevil
-
         - dolphin
         - kate
         - konsole
@@ -57,19 +53,18 @@ modules:
         - plasma-systemmonitor
         - kde-gtk-config
         - kcalc
-
         - fastfetch
         - micro
         - btop
+        - htop
         - xdg-desktop-portal-kde
         - firefox
-
         - powerdevil
         - tuned
         - tuned-ppd
         - tuned-profiles-atomic
         - lm_sensors
-
+        
   - type: kargs
     kargs:
       - amdgpu.ppfeaturemask=0xffffffff
@@ -85,7 +80,6 @@ modules:
       disabled:
         - gdm.service
 
-
   - type: default-flatpaks
     configurations:
       - notify: true
@@ -95,4 +89,4 @@ modules:
           name: flathub-beta
           title: Flathub Beta
         install:
-          - org.kde.discover:beta
+          - org.kde.discover

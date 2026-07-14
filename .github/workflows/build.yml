@@ -27,7 +27,6 @@ jobs:
       matrix:
         recipe:
           # !! Add your recipes here
-          - recipe.yml
           - hwe.yml
           - nvidia.yml
     steps:
