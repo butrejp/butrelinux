@@ -45,6 +45,7 @@ jobs:
           cat > $GITHUB_WORKSPACE/ks.cfg << EOF
           graphical
           network --bootproto=dhcp --device=link --activate
+          services --disabled=kdump
           ostreecontainer --url=ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
           
           %pre --erroronfail
@@ -79,6 +80,11 @@ jobs:
           KEY
           
           echo "export CONTAINERS_POLICY=/etc/containers/policy.json" >> /etc/bashrc
+          %end
+          
+          %post --erroronfail
+          sed -i 's/crashkernel=[^ ]*//g' /etc/default/grub
+          grub2-mkconfig -o /boot/grub2/grub.cfg
           %end
           EOF
 
