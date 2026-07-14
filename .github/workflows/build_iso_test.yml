@@ -1,0 +1,142 @@
+name: Build butrelinux ISO test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [hwe, nvidia]
+    steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Prepare results directory
+        run: |
+          sudo mkdir -p /var/lib/containers/storage
+          sudo chmod 755 /var/lib/containers/storage
+          mkdir -p $GITHUB_WORKSPACE/results
+
+      - name: Pull base installer image
+        run: sudo podman pull quay.io/centos/centos:stream10
+          
+      - name: Prepare Kickstart with Cosign Verification
+        run: |
+          cat << 'EOF' > $GITHUB_WORKSPACE/ks.cfg
+          graphical
+          network --bootproto=dhcp --device=link --activate
+
+          %addon com_redhat_kdump --disable
+          %end
+
+          ostreecontainer --url=ostree-image-signed:docker://ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
+          
+          %pre --erroronfail
+          mkdir -p /etc/containers/registries.d
+          mkdir -p /etc/pki/containers
+          
+          cat > /etc/containers/policy.json << 'POLICY'
+          {
+            "default": [{"type": "insecureAcceptAnything"}],
+            "transports": {
+              "docker": {
+                "ghcr.io/butrejp": [
+                  {
+                    "type": "sigstoreSigned",
+                    "keyPath": "/etc/pki/containers/cosign.pub",
+                    "signedIdentity": {"type": "matchRepository"}
+                  }
+                ]
+              }
+            }
+          }
+          POLICY
+          
+          cat > /etc/containers/registries.d/butrelinux.yaml << 'REGISTRY'
+          docker:
+            ghcr.io/butrejp:
+              use-sigstore-attachments: true
+          REGISTRY
+          
+          cat > /etc/pki/containers/cosign.pub << 'KEY'
+          PLACEHOLDER_PUBKEY
+          KEY
+          
+          echo "export CONTAINERS_POLICY=/etc/containers/policy.json" >> /etc/bashrc
+          %end
+          
+          %post --erroronfail
+          if command -v grubby > /dev/null; then
+              grubby --update-kernel=ALL --remove-args="crashkernel" || true
+          fi
+          sed -i 's/crashkernel=[^ ]*//g' /etc/default/grub || true
+          groupadd -f plugdev
+          systemctl disable systemd-oomd.service
+          %end
+          EOF
+          
+          sed -i '/PLACEHOLDER_PUBKEY/r /dev/stdin' $GITHUB_WORKSPACE/ks.cfg << KEY_DATA
+          $(cat $GITHUB_WORKSPACE/cosign.pub)
+          KEY_DATA
+          sed -i '/PLACEHOLDER_PUBKEY/d' $GITHUB_WORKSPACE/ks.cfg
+
+      - name: Initialize loop devices on GitHub runner
+        run: |
+          sudo modprobe loop
+          sudo mknod /dev/loop-control c 10 237 || true
+          for i in {0..7}; do
+            sudo mknod /dev/loop$i b 7 $i || true
+          done
+          sudo losetup -f
+
+      - name: Generate Custom Installer ISO
+        run: |
+          curl -L -o cs10-boot.iso "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+          sudo podman run --rm \
+            --privileged \
+            -v /dev:/dev \
+            -v $GITHUB_WORKSPACE:/work:z \
+            quay.io/centos/centos:stream10 \
+            /bin/bash -c "dnf install -y lorax && mkksiso /work/ks.cfg /work/cs10-boot.iso /work/results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso"
+
+      - name: Fix output permissions
+        run: sudo chown -R $(id -u):$(id -g) $GITHUB_WORKSPACE/results
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v7
+        with:
+          name: butrelinux-${{ matrix.variant }}-iso
+          path: ./results/butrelinux-${{ matrix.variant }}-${{ env.BUILD_DATE }}.iso
+          retention-days: 14
+          if-no-files-found: error
+
+  package-isos:
+    needs: build-iso
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Download ISO artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: butrelinux-*-iso
+          path: downloaded-isos
+          merge-multiple: true
+
+      - name: Upload Final Bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: butrelinux-complete-release-${{ env.BUILD_DATE }}
+          path: downloaded-isos/*.iso
+          retention-days: 14
