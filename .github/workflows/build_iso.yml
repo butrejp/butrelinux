@@ -146,14 +146,9 @@ jobs:
           path: downloaded-isos
           merge-multiple: true
 
-      - name: Create Unified Zip
-        run: |
-          cd downloaded-isos
-          zip -j ../butrelinux-all-variants-${{ env.BUILD_DATE }}.zip *.iso
-
-      - name: Upload Final Zip Bundle
+      - name: Upload Final Bundle
         uses: actions/upload-artifact@v7
         with:
           name: butrelinux-complete-release-${{ env.BUILD_DATE }}
-          path: butrelinux-all-variants-${{ env.BUILD_DATE }}.zip
+          path: downloaded-isos/*.iso
           retention-days: 14
