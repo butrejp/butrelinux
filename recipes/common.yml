@@ -79,6 +79,8 @@ modules:
         - tuned-ppd.service
       disabled:
         - gdm.service
+      masked:
+        - rechunker-group-fix.service
 
   - type: default-flatpaks
     configurations:
