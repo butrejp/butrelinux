@@ -36,7 +36,6 @@ jobs:
 
       - name: Install dependencies for ISO generation
         run: |
-          sudo apt-get update
           sudo podman pull quay.io/centos/centos:stream10
           
       - name: Prepare Kickstart with Cosign Verification
