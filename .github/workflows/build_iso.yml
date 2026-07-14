@@ -33,10 +33,13 @@ jobs:
       - name: Prepare Kickstart with Cosign Verification
         run: |
           PUBKEY=$(cat $GITHUB_WORKSPACE/cosign.pub)
-          cat > $GITHUB_WORKSPACE/ks.cfg << EOF
+          cat << 'EOF' > $GITHUB_WORKSPACE/ks.cfg
           graphical
           network --bootproto=dhcp --device=link --activate
-          services --disabled=kdump
+
+          # Disable the Kdump module within the Anaconda GUI state machine
+          %addon com_redhat_kdump --disable
+          %end
 
           ostreecontainer --url=ghcr.io/butrejp/butrelinux-${{ matrix.variant }}:latest
           
@@ -75,8 +78,13 @@ jobs:
           %end
           
           %post --erroronfail
-          sed -i 's/crashkernel=[^ ]*//g' /etc/default/grub
-          grub2-mkconfig -o /boot/grub2/grub.cfg
+          # Prevent installer-level crashkernel flags from leaking into the bootc image layout
+          if command -v grubby > /dev/null; then
+              grubby --update-kernel=ALL --remove-args="crashkernel" || true
+          fi
+          sed -i 's/crashkernel=[^ ]*//g' /etc/default/grub || true
+          
+          # Clean up upstream warnings and noise
           groupadd -f plugdev
           systemctl disable systemd-oomd.service
           %end
