@@ -14,10 +14,7 @@ local package layering is disabled by default.  you can change this with the com
 sudo sed -i 's/^LockLayering=true/LockLayering=false/' /etc/rpm-ostreed.conf && sudo rpm-ostree reload
 ```
 
-the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  ISO images are frozen on the unverified registry and do not receive updates until you rebase to the signed ostree image with  
-```bash
-rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux:latest
-```
+the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  
 
 ## installation  
 ISO downloads available here:  
@@ -90,3 +87,6 @@ bluefin is reorganizing and the old bluefin-gdx is getting discontinued, meaning
 also, I decided to use this as an opportunity to break out a standard installation and an nvidia installation.  have fun with that amd users
 > [!WARNING]  
 > [This is an alpha release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha).  when upstream stabilizes, I'll stabilize.
+20260714  
+ISOs are out.  have at it.  
+also got a unified iso in the works but matrix builds are easy so split installers came first
