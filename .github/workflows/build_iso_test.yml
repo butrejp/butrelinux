@@ -32,10 +32,12 @@ jobs:
           xorriso -indev results/base.iso \
             -outdev results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
             -volid "BUTRELINUX" \
+            -boot_image any reply \
             -map kickstarts/hwe.cfg /hwe.cfg \
             -map kickstarts/nvidia.cfg /nvidia.cfg \
-            -map boot/grub.cfg /boot/grub2/grub.cfg \
-            -map boot/grub.cfg /EFI/BOOT/grub.cfg
+            -update boot/grub.cfg /EFI/BOOT/grub.cfg \
+            -update boot/grub.cfg /EFI/BOOT/grub2.cfg \
+            -update boot/grub.cfg /boot/grub2/grub.cfg
 
       - name: Upload Unified ISO
         uses: actions/upload-artifact@v7
