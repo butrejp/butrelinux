@@ -33,8 +33,9 @@ jobs:
 
       - name: Patch and Generate Unified ISO
         run: |
-          xorriso -osirrox on -indev cs10-boot.iso -boot_image any extract_boot_images .
-          mcopy -D o -i efiboot.img boot/grub.cfg ::/EFI/BOOT/grub.cfg
+          mkdir -p boot_extraction
+          xorriso -osirrox on -indev cs10-boot.iso -boot_image any extract_boot_images boot_extraction/
+          mcopy -D o -i boot_extraction/efiboot.img boot/grub.cfg ::/EFI/BOOT/grub.cfg
           xorriso -indev cs10-boot.iso \
             -outdev $GITHUB_WORKSPACE/results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
             -volid "BUTRELINUX" \
@@ -43,7 +44,7 @@ jobs:
             -map nvidia-injected.cfg /nvidia.cfg \
             -map boot/grub.cfg /EFI/BOOT/grub.cfg \
             -map boot/grub.cfg /boot/grub2/grub.cfg \
-            -map efiboot.img /images/efiboot.img
+            -map boot_extraction/efiboot.img /images/efiboot.img
 
       - name: Upload Unified ISO
         uses: actions/upload-artifact@v7
