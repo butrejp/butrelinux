@@ -35,6 +35,7 @@ jobs:
           - recipe.yml
           - hwe.yml
           - nvidia.yml
+          - lts.yml
     steps:
       # the build is fully handled by the reusable github action
       - name: Build Custom Image
