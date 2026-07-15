@@ -33,7 +33,7 @@ jobs:
 
       - name: Patch and Generate Unified ISO
         run: |
-          xorriso -indev cs10-boot.iso -boot_image any extract_boot_images ./
+          xorriso -osirrox on -indev cs10-boot.iso -boot_image any extract_boot_images .
           mcopy -D o -i efiboot.img boot/grub.cfg ::/EFI/BOOT/grub.cfg
           xorriso -indev cs10-boot.iso \
             -outdev $GITHUB_WORKSPACE/results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
