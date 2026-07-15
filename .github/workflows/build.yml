@@ -6,7 +6,8 @@ on:
   push:
     paths-ignore:
       - "**.md"
-      - "build_iso**.yml"
+      - ".github/workflows/build_iso.yml"
+      - ".github/workflows/build_iso_test.yml"
   pull_request:
     paths-ignore:
       - "**.md"
