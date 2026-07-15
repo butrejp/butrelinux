@@ -31,33 +31,19 @@ jobs:
           sed -i '/PLACEHOLDER_PUBKEY/r cosign.pub' nvidia-injected.cfg
           sed -i '/PLACEHOLDER_PUBKEY/d' nvidia-injected.cfg
 
-      - name: Stage and Patch ISO
+      - name: Patch and Generate Unified ISO
         run: |
-          mkdir -p iso_content
-          xorriso -osirrox on -indev cs10-boot.iso -extract / iso_content/
-          EFI_IMG=$(find iso_content -name "*.img" | grep -i "efi" | head -n 1)
-          echo "Found EFI image at: $EFI_IMG"
-          cp hwe-injected.cfg iso_content/hwe.cfg
-          cp nvidia-injected.cfg iso_content/nvidia.cfg
-          cp boot/grub.cfg iso_content/EFI/BOOT/grub.cfg
-          cp boot/grub.cfg iso_content/boot/grub2/grub.cfg
-          if [ -f "$EFI_IMG" ]; then
-            mcopy -D o -i "$EFI_IMG" boot/grub.cfg ::/EFI/BOOT/grub.cfg
-            mcopy -D o -i "$EFI_IMG" boot/grub.cfg ::/boot/grub2/grub.cfg || true
-          else
-            echo "Error: Could not find EFI image file."
-            exit 1
-          fi
-
-      - name: Generate Unified ISO
-        run: |
-          xorriso -as mkisofs \
-            -o $GITHUB_WORKSPACE/results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
+          xorriso -indev cs10-boot.iso -boot_image any extract_boot_images ./
+          mcopy -D o -i efiboot.img boot/grub.cfg ::/EFI/BOOT/grub.cfg
+          xorriso -indev cs10-boot.iso \
+            -outdev $GITHUB_WORKSPACE/results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
             -volid "BUTRELINUX" \
-            -eltorito-boot images/efiboot.img \
-            -no-emul-boot -boot-load-size 4 -boot-info-table \
-            --efi-boot images/efiboot.img -efi-boot-part --efi-boot-image --protective-msdos-label \
-            iso_content
+            -boot_image any keep \
+            -map hwe-injected.cfg /hwe.cfg \
+            -map nvidia-injected.cfg /nvidia.cfg \
+            -map boot/grub.cfg /EFI/BOOT/grub.cfg \
+            -map boot/grub.cfg /boot/grub2/grub.cfg \
+            -map efiboot.img /images/efiboot.img
 
       - name: Upload Unified ISO
         uses: actions/upload-artifact@v7
