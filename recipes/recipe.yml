@@ -4,6 +4,8 @@ description: Bluefin-GDX with KDE Plasma
 base-image: ghcr.io/ublue-os/bluefin-gdx
 image-version: lts
 
+# This recipe is for a depreciated image.  it is left in place so existing users get security updates.  New users should use the butrelinux-hwe or butrelinux-nvidia recipe instead.
+
 modules:
   - type: files
     files:
