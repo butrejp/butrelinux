@@ -24,7 +24,7 @@ EOF
 
 # Edit /usr/lib/os-release using sed
 # We use "|" as a delimiter in sed to avoid issues with "/" in URLs
-sed -i "s|^VARIANT_ID=.*|VARIANT_ID=gdx|" /usr/lib/os-release
+sed -i "s|^VARIANT_ID=.*|VARIANT_ID=nvidia|" /usr/lib/os-release
 sed -i "s|^PRETTY_NAME=.*|PRETTY_NAME=\"$IMAGE_PRETTY_NAME\"|" /usr/lib/os-release
 sed -i "s|^NAME=.*|NAME=\"$IMAGE_PRETTY_NAME\"|" /usr/lib/os-release
 sed -i "s|^ID=.*|ID=$IMAGE_NAME|" /usr/lib/os-release

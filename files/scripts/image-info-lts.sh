@@ -15,16 +15,16 @@ IMAGE_INFO="/usr/share/ublue-os/image-info.json"
 mkdir -p /usr/share/ublue-os
 cat >$IMAGE_INFO <<EOF
 {
-  "image-name": "$IMAGE_NAME-hwe",
+  "image-name": "$IMAGE_NAME-lts",
   "image-vendor": "$IMAGE_VENDOR",
   "image-tag": "$IMAGE_TAG",
-  "image-ref": "ostree-image-signed:docker://ghcr.io/$IMAGE_VENDOR/$IMAGE_NAME-hwe"
+  "image-ref": "ostree-image-signed:docker://ghcr.io/$IMAGE_VENDOR/$IMAGE_NAME-lts"
 }
 EOF
 
 # Edit /usr/lib/os-release using sed
 # We use "|" as a delimiter in sed to avoid issues with "/" in URLs
-sed -i "s|^VARIANT_ID=.*|VARIANT_ID=hwe|" /usr/lib/os-release
+sed -i "s|^VARIANT_ID=.*|VARIANT_ID=lts|" /usr/lib/os-release
 sed -i "s|^PRETTY_NAME=.*|PRETTY_NAME=\"$IMAGE_PRETTY_NAME\"|" /usr/lib/os-release
 sed -i "s|^NAME=.*|NAME=\"$IMAGE_PRETTY_NAME\"|" /usr/lib/os-release
 sed -i "s|^ID=.*|ID=$IMAGE_NAME|" /usr/lib/os-release

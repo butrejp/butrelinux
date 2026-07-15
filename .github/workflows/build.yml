@@ -2,7 +2,7 @@ name: bluebuild
 on:
   schedule:
     - cron:
-        "00 06 * * *"
+        "00 06 * * 0"
   push:
     paths-ignore:
       - "**.md"

@@ -40,6 +40,8 @@ jobs:
             -boot_image any replay \
             -map kickstarts/hwe.cfg /hwe.cfg \
             -map kickstarts/nvidia.cfg /nvidia.cfg \
+            -map kickstarts/lts.cfg /lts.cfg \
+            -map kickstarts/legacy.cfg /legacy.cfg \
             -update boot/grub.cfg /EFI/BOOT/grub.cfg \
             -update boot/grub.cfg /EFI/BOOT/grub2.cfg \
             -update boot/grub.cfg /boot/grub2/grub.cfg
@@ -56,7 +58,8 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: butrelinux-${{ env.BUILD_DATE }}
-          name: butrelinux Unified ISO ${{ env.BUILD_DATE }}
+          name: butrelinux ISO ${{ env.BUILD_DATE }}
+          body: This is an automated release of the butrelinux ISO built on ${{ env.BUILD_DATE }}.
           generate_release_notes: true
           files: |
             ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso

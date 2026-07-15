@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: butrelinux-lts
+description: Bluefin LTS with KDE Plasma (Intel/AMD)
+base-image: ghcr.io/projectbluefin/bluefin-lts
+image-version: stable
+
+modules:
+  - from-file: common.yml
+
+  - type: script
+    scripts:
+      - image-info-lts.sh
+  
+  - type: soar
+  - type: signing

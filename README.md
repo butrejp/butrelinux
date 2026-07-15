@@ -27,7 +27,7 @@ if you use the rebase instructions you must rebase from a centos stream derived 
 to rebase an existing EL10 based installation to the latest build:
 #### amd/intel
 ```bash
-# clean up default bluefin flatpaks
+# optionally clean up default flatpaks
 flatpak uninstall --all
 # rebase to the unsigned image, to get the proper signing keys and policies installed:
 rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux-hwe:latest
@@ -42,19 +42,15 @@ rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelin
 ```
 #### nvidia
 ```bash
-# clean up default bluefin flatpaks
 flatpak uninstall --all
-# rebase to the unsigned image, to get the proper signing keys and policies installed:
 rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux-nvidia:latest
 ```
 after the system reboots:
 ```bash
-# since skel can't touch existing users, optionally copy the default configs to your user profile
-# or just make your own config.  I'm not your mom.
 mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
-# rebase to the signed image to complete the installation
 rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux-nvidia:latest
 ```
+alternatively, there's butrelinux-lts or just butrelinux (legacy GDX image).  if you're not sure whether you should install these two, you probably shouldn't.  
 
 ### verification
 
@@ -96,4 +92,7 @@ also, I decided to use this as an opportunity to break out a standard installati
 
 20260714 UPDATE  
 ISOs are out.  have at it.  
-also got a unified iso in the works but matrix builds are easy so split installers came first
+also got a unified iso in the works but matrix builds are easy so split installers came first  
+
+20260715 UPDATE  
+unified iso was easier than I thought.  they've been available since yesterday.  still tweaking, so expect fresh releases to come regularly, but installer behavior shouldn't change much.  once I get it all sorted out it'll be monthly builds pushed automatically
