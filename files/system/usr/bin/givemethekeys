@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+#
+# givemethekeys - Toggle rpm-ostree package layering lock
+#
+# Exit codes:
+#   0 = success / unlocked (status)
+#   1 = locked (status) or general error
+#   2 = configuration error
+
+set -euo pipefail
+
+CONFIG="/etc/rpm-ostreed.conf"
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") <command> [options]
+
+Commands:
+  unlock    Allow rpm-ostree package layering
+  lock      Restore default layering lock
+  status    Show current layering lock status
+  help      Show this help
+
+Options:
+  -y, --yes    Skip confirmation prompt (unlock only)
+EOF
+}
+
+reload_daemon() {
+    if ! rpm-ostree reload >/dev/null; then
+        echo "Failed to reload rpm-ostreed. The configuration was updated, but the change may not take effect until the daemon is reloaded or the system is rebooted." >&2
+        exit 1
+    fi
+}
+
+set_lock() {
+    local value="$1"
+
+    if grep -q '^LockLayering=' "$CONFIG"; then
+        sed -i "s/^LockLayering=.*/LockLayering=${value}/" "$CONFIG"
+    else
+        printf '\nLockLayering=%s\n' "$value" >>"$CONFIG"
+    fi
+
+    reload_daemon
+}
+
+status() {
+    local value
+
+    value="$(awk -F= '/^LockLayering=/{print $2; exit}' "$CONFIG" 2>/dev/null || true)"
+
+    case "$value" in
+        false)
+            echo "Layering: unlocked"
+            exit 0
+            ;;
+        true|"")
+            echo "Layering: locked"
+            exit 1
+            ;;
+        *)
+            echo "Layering: unknown ($value)"
+            exit 2
+            ;;
+    esac
+}
+
+need_root() {
+    if (( EUID != 0 )); then
+        echo "This command must be run as root." >&2
+        exit 1
+    fi
+}
+
+confirm_unlock() {
+    local yes="${1:-false}"
+
+    [[ "$yes" == "true" ]] && return
+
+    cat <<EOF
+Warning: Package layering is disabled by default.
+
+Unlocking layering may make your system harder to reproduce and
+may complicate support.
+
+Continue? [y/N]
+EOF
+
+    read -r reply
+    case "$reply" in
+        y|Y|yes|YES)
+            ;;
+        *)
+            echo "Aborted."
+            exit 1
+            ;;
+    esac
+}
+
+main() {
+    local cmd="${1:-help}"
+    local yes=false
+
+    shift || true
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -y|--yes)
+                yes=true
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                usage
+                exit 1
+                ;;
+        esac
+        shift
+    done
+
+    case "$cmd" in
+        unlock)
+            need_root
+            confirm_unlock "$yes"
+            set_lock false
+            cat <<EOF
+Package layering has been unlocked.  You can now use rpm-ostree install.
+
+To restore the default:
+  sudo givemethekeys lock
+EOF
+            ;;
+        lock)
+            need_root
+            set_lock true
+            cat <<EOF
+Package layering has been locked.
+
+To remove layered packages: 
+  rpm-ostree reset
+EOF
+            ;;
+        status)
+            status
+            ;;
+        help|-h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown command: $cmd" >&2
+            echo
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

@@ -28,12 +28,17 @@
     }
   ],
   "prefix": "󱍢 ",
-  "tips": ["Develop with devcontainers! Use `devcontainer.json` files in your projects for isolated, reproducible environments",
-"Performance profiling tools are built-in: try `sysprof`, `bpftrace`, and other debugging tools",
-"Switch shells safely: change your shell in Terminal settings instead of system-wide",
-"Container development is OS-agnostic - your devcontainers work on Linux, macOS, and Windows",
-"Use `docker compose` for multi-container development if devcontainers don't fit your workflow",
-"Enable local layering with `givemethekeys` (coming soon)"],
+  "tips": [
+            "Develop with devcontainers! Use `devcontainer.json` files in your projects for isolated, reproducible environments",
+            "Switch shells safely: change your shell in Terminal settings instead of system-wide",
+            "Enable local layering with `givemethekeys`",
+            "Give [Kontainer](appstream://io.github.denysmb.kontainer) a try for containerized development with GUI support",
+            "Try our new unified ISO, available on github and sourceforge",
+            "Install [fluxer](appstream://app.fluxer.fluxer) to join the brand new [butrelinux community](https://fluxer.gg/XT3wcqUG)",
+            "Need a discord client?  try [vesktop](appstream://dev.vencord.vesktop)",
+            "Check out the [butrelinux wiki](https://github.com/butrejp/butrelinux/wiki) for more information and tips",
+            "Don't support butrelinux, support the Kawaguchi O'Connor Initiative instead: [KOI](https://koinitiative.org/)"
+          ],
   "tips-presets": ["kde"],
   "use-accent-color": true
 }
