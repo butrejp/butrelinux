@@ -33,18 +33,18 @@ jobs:
 
       - name: Patch and Generate Unified ISO
         run: |
-          mkdir -p boot_extraction
-          xorriso -osirrox on -indev cs10-boot.iso -boot_image any extract_boot_images boot_extraction/
-          mcopy -D o -i boot_extraction/efiboot.img boot/grub.cfg ::/EFI/BOOT/grub.cfg
+          xorriso -osirrox on -indev cs10-boot.iso -extract /images/efiboot.img efiboot.img
+          mcopy -D o -i efiboot.img boot/grub.cfg ::/EFI/BOOT/grub.cfg
           xorriso -indev cs10-boot.iso \
             -outdev $GITHUB_WORKSPACE/results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
             -volid "BUTRELINUX" \
             -boot_image any keep \
+            -boot_image any bin_path=/images/efiboot.img \
             -map hwe-injected.cfg /hwe.cfg \
             -map nvidia-injected.cfg /nvidia.cfg \
             -map boot/grub.cfg /EFI/BOOT/grub.cfg \
             -map boot/grub.cfg /boot/grub2/grub.cfg \
-            -map boot_extraction/efiboot.img /images/efiboot.img
+            -map efiboot.img /images/efiboot.img
 
       - name: Upload Unified ISO
         uses: actions/upload-artifact@v7
@@ -53,4 +53,3 @@ jobs:
           path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
           retention-days: 14
           if-no-files-found: error
-          # test comment
