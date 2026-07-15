@@ -2,14 +2,15 @@ name: bluebuild
 on:
   schedule:
     - cron:
-        "00 06 * * *" # build at 06:00 UTC every day
-        # (20 minutes after last ublue images start building)
+        "00 06 * * *"
   push:
-    paths-ignore: # don't rebuild if only documentation has changed
+    paths-ignore:
       - "**.md"
       - "build_iso**.yml"
-
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - "build_iso**.yml"
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time
