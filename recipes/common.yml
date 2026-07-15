@@ -8,6 +8,7 @@ modules:
   - type: script
     snippets:
       - dnf config-manager --set-enabled crb
+      - chmod +x /usr/bin/givemethekeys
 
   - type: dnf
     remove:
