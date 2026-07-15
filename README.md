@@ -8,9 +8,20 @@ a bluefin-lts variant for those who want EL10+KDE
 
 local package layering is disabled by default.  you can change this with the command below, though the intended workflow is distrobox + flatpaks.
 ```bash
-sudo sed -i 's/^LockLayering=true/LockLayering=false/' /etc/rpm-ostreed.conf && sudo rpm-ostree reload
+sudo givemethekeys unlock
 ```
+```
+Usage: givemethekeys <command> [options]
 
+Commands:
+  unlock    Allow rpm-ostree package layering
+  lock      Restore default layering lock
+  status    Show current layering lock status
+  help      Show this help
+
+Options:
+  -y, --yes    Skip confirmation prompt (unlock only)
+```
 the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  
 
 ## installation  
