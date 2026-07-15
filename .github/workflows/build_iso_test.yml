@@ -32,7 +32,7 @@ jobs:
           xorriso -indev results/base.iso \
             -outdev results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
             -volid "BUTRELINUX" \
-            -boot_image any reply \
+            -boot_image any replay \
             -map kickstarts/hwe.cfg /hwe.cfg \
             -map kickstarts/nvidia.cfg /nvidia.cfg \
             -update boot/grub.cfg /EFI/BOOT/grub.cfg \
