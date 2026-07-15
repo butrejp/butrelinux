@@ -11,7 +11,8 @@ on:
   pull_request:
     paths-ignore:
       - "**.md"
-      - "build_iso**.yml"
+      - ".github/workflows/build_iso.yml"
+      - ".github/workflows/build_iso_test.yml"
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time
