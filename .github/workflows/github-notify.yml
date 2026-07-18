@@ -55,7 +55,7 @@ jobs:
 
           if event == "push":
               commit = payload["head_commit"]
-              title = "📦 Push to main"
+              title = "🚀 Push to main"
               description = (
                   f"**{actor}** pushed to `main`\n\n"
                   f"{commit['message']}"
@@ -66,15 +66,15 @@ jobs:
               pr = payload["pull_request"]
 
               if payload["action"] == "closed" and pr["merged"]:
-                  title = "🎉 Pull request merged"
+                  title = "🔀 Pull request merged"
                   color = 5763719
               elif payload["action"] == "closed":
-                  title = "🔒 Pull request closed"
+                  title = "🗑️ Pull request closed"
                   color = 15548997
               elif payload["action"] == "reopened":
                   title = "♻️ Pull request reopened"
               else:
-                  title = "🔀 Pull request opened"
+                  title = "📝 Pull request opened"
 
               description = (
                   f"**{pr['title']}**\n\n"
@@ -86,10 +86,10 @@ jobs:
               issue = payload["issue"]
 
               if payload["action"] == "closed":
-                  title = "🔒 Issue closed"
+                  title = "🛠️ Issue closed"
                   color = 5763719
               elif payload["action"] == "reopened":
-                  title = "♻️ Issue reopened"
+                  title = "🧩 Issue reopened"
               else:
                   title = "🐛 Issue opened"
 
@@ -102,7 +102,7 @@ jobs:
           elif event == "release":
               release = payload["release"]
 
-              title = "🚀 Release published"
+              title = "📦 Release published"
               description = (
                   f"**{release['name'] or release['tag_name']}**\n\n"
                   f"by {release['author']['login']}"
