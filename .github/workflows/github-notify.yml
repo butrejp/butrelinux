@@ -1,0 +1,134 @@
+name: Fluxer GitHub Notifications
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - closed
+
+  issues:
+    types:
+      - opened
+      - reopened
+      - closed
+
+  release:
+    types:
+      - published
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Send notification to Fluxer
+        env:
+          FLUXER_WEBHOOK: ${{ secrets.FLUXER_WEBHOOK }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          PAYLOAD: ${{ toJson(github.event) }}
+
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          event = os.environ["EVENT_NAME"]
+          repo = os.environ["REPO"]
+          actor = os.environ["ACTOR"]
+          payload = json.loads(os.environ["PAYLOAD"])
+
+          color = 5814783
+          title = None
+          description = None
+          url = None
+
+          if event == "push":
+              commit = payload["head_commit"]
+              title = "📦 Push to main"
+              description = (
+                  f"**{actor}** pushed to `main`\n\n"
+                  f"{commit['message']}"
+              )
+              url = commit["url"]
+
+          elif event == "pull_request":
+              pr = payload["pull_request"]
+
+              if payload["action"] == "closed" and pr["merged"]:
+                  title = "🎉 Pull request merged"
+                  color = 5763719
+              elif payload["action"] == "closed":
+                  title = "🔒 Pull request closed"
+                  color = 15548997
+              elif payload["action"] == "reopened":
+                  title = "♻️ Pull request reopened"
+              else:
+                  title = "🔀 Pull request opened"
+
+              description = (
+                  f"**{pr['title']}**\n\n"
+                  f"by {pr['user']['login']}"
+              )
+              url = pr["html_url"]
+
+          elif event == "issues":
+              issue = payload["issue"]
+
+              if payload["action"] == "closed":
+                  title = "🔒 Issue closed"
+                  color = 5763719
+              elif payload["action"] == "reopened":
+                  title = "♻️ Issue reopened"
+              else:
+                  title = "🐛 Issue opened"
+
+              description = (
+                  f"**{issue['title']}**\n\n"
+                  f"by {issue['user']['login']}"
+              )
+              url = issue["html_url"]
+
+          elif event == "release":
+              release = payload["release"]
+
+              title = "🚀 Release published"
+              description = (
+                  f"**{release['name'] or release['tag_name']}**\n\n"
+                  f"by {release['author']['login']}"
+              )
+              url = release["html_url"]
+
+          else:
+              raise SystemExit("Unknown event")
+
+          body = {
+              "embeds": [{
+                  "title": title,
+                  "description": description,
+                  "url": url,
+                  "color": color,
+                  "footer": {
+                      "text": repo
+                  }
+              }]
+          }
+
+          req = urllib.request.Request(
+              os.environ["FLUXER_WEBHOOK"],
+              data=json.dumps(body).encode(),
+              headers={"Content-Type": "application/json"}
+          )
+
+          urllib.request.urlopen(req)
+          PY
