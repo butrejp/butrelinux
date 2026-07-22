@@ -1,0 +1,35 @@
+name: Repo Heartbeat
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # Runs monthly at midnight UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update heartbeat file
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/heartbeat.txt
+
+      - name: Commit updated heartbeat file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .github/heartbeat.txt
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: repository heartbeat"
+            git push
+          fi

@@ -8,6 +8,7 @@ on:
       - "**.md"
       - ".github/workflows/build_iso.yml"
       - ".github/workflows/build_iso_test.yml"
+      - ".github/heartbeat.txt"
       - "**.cfg"
   pull_request:
     paths-ignore:
