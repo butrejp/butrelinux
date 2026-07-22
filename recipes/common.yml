@@ -33,6 +33,7 @@ modules:
         - plasma-desktop
         - plasma-workspace-wayland
         - kde-settings-plasma
+        - flatpak-kcm
         - kscreen
         - kinfocenter
         - sddm
