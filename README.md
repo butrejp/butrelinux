@@ -1,5 +1,3 @@
-WIP (perpetual). this is more or less feature-complete with no blocking issues but there are a handful of oddities that are mostly upstream issues on epel or bluefin.  this is meant to be a personal build but I figure I can't be the only person who wants kde and prefers lts release cycles.  
-
 ![screenshot of desktop and fastfetch](https://repository-images.githubusercontent.com/1181869151/6c7b9e65-ee0f-4e1d-8f30-1460aa6408ca)
 
 # butrelinux &nbsp; [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml) [![works on my machine badge](https://cdn.jsdelivr.net/gh/nikku/works-on-my-machine@v0.4.0/badge.svg)](https://github.com/nikku/works-on-my-machine) [![Download butrelinux](https://img.shields.io/sourceforge/dt/butrelinux.svg)](https://butrelinux.sourceforge.io/)  
