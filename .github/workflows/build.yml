@@ -10,6 +10,8 @@ on:
       - ".github/workflows/build_iso_test.yml"
       - ".github/heartbeat.txt"
       - "**.cfg"
+      - "recipes/hwe-test.yml"
+      - "recipes/nvidia-test.yml"
   pull_request:
     paths-ignore:
       - "**.md"
