@@ -2,7 +2,7 @@
 name: butrelinux-hwe-testing
 description: Bluefin LTS HWE with KDE Plasma (Intel/AMD)
 base-image: ghcr.io/projectbluefin/bluefin-lts-hwe
-image-version: latest
+image-version: testing
 
 modules:
   - from-file: common.yml

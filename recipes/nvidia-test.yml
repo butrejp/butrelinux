@@ -2,7 +2,7 @@
 name: butrelinux-nvidia-test
 description: Bluefin LTS HWE with KDE Plasma (Nvidia) testing
 base-image: ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia
-image-version: latest
+image-version: testing
 
 modules:
   - from-file: common.yml
