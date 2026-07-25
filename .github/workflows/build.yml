@@ -8,6 +8,7 @@ on:
       - "**.md"
       - ".github/workflows/build_iso.yml"
       - ".github/workflows/build_iso_test.yml"
+      - ".github/workflows/build_testing.yml"
       - ".github/heartbeat.txt"
       - "**.cfg"
       - "recipes/hwe-test.yml"

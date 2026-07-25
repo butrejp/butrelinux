@@ -8,13 +8,14 @@ on:
       - "**.md"
       - ".github/workflows/build_iso.yml"
       - ".github/workflows/build_iso_test.yml"
+      - ".github/build.yml"
       - ".github/heartbeat.txt"
       - "**.cfg"
       - "recipes/hwe.yml"
       - "recipes/nvidia.yml"
       - "recipes/lts.yml"
       - "recipes/recipe.yml"
-      
+
   pull_request:
     paths-ignore:
       - "**.md"
