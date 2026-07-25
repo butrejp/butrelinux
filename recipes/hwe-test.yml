@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: butrelinux-hwe-testing
+description: Bluefin LTS HWE with KDE Plasma (Intel/AMD)
+base-image: ghcr.io/projectbluefin/bluefin-lts-hwe
+image-version: latest
+
+modules:
+  - from-file: common.yml
+
+  - type: script
+    scripts:
+      - image-info-hwe.sh
+  
+  - type: soar
+  - type: signing
