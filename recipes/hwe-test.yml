@@ -6,6 +6,12 @@ image-version: testing
 
 modules:
   - from-file: common.yml
+  
+  - type: dnf
+    repos:
+    copr:
+      - name: theblackdon/dcli-bootc
+        chroot: fedora-44-x86_64
 
   - type: script
     scripts:
