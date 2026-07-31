@@ -5,61 +5,52 @@ on:
     workflows:
       - "bluebuild"
       - "Build butrelinux Unified ISO"
-      # add workflow names here
     types:
       - completed
 
 jobs:
   notify:
     runs-on: ubuntu-latest
-
+    if: >-
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event.workflow_run.conclusion == 'failure'
     permissions:
       actions: read
 
     steps:
       - name: Send workflow result
-        if: |
-          github.event.workflow_run.conclusion == 'failure' ||
-          github.event.workflow_run.conclusion == 'success'
         env:
           FLUXER_WEBHOOK: ${{ secrets.FLUXER_WEBHOOK }}
           WORKFLOW: ${{ github.event.workflow_run.name }}
           RESULT: ${{ github.event.workflow_run.conclusion }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
           URL: ${{ github.event.workflow_run.html_url }}
-
         run: |
           python3 <<'PY'
           import json
           import os
           import urllib.request
-
+          
           result = os.environ["RESULT"]
-
           if result == "failure":
               title = "❌ Workflow failed"
               color = 15548997
           else:
               title = "✅ Workflow succeeded"
               color = 5763719
-
+              
           body = {
               "embeds": [{
                   "title": title,
-                  "description": (
-                      f"**{os.environ['WORKFLOW']}**\n"
-                      f"Branch: `{os.environ['BRANCH']}`"
-                  ),
+                  "description": f"**{os.environ['WORKFLOW']}**\nBranch: `{os.environ['BRANCH']}`",
                   "url": os.environ["URL"],
                   "color": color
               }]
           }
-
           req = urllib.request.Request(
               os.environ["FLUXER_WEBHOOK"],
               data=json.dumps(body).encode(),
               headers={"Content-Type": "application/json"}
           )
-
           urllib.request.urlopen(req)
           PY
