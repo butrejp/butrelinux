@@ -7,11 +7,12 @@ image-version: testing
 modules:
   - from-file: common.yml
   
-  - type: dnf
+  - type: fedora-rpm
+    releasever: "44"
     repos:
-      copr:
-        - name: theblackdon/dcli-bootc
-          chroot: fedora-44-x86_64
+      - https://copr.fedorainfracloud.org/coprs/theblackdon/dcli-bootc/repo/fedora-44/theblackdon-dcli-bootc-fedora-44.repo
+    install:
+      - dcli-bootc
 
   - type: script
     scripts:

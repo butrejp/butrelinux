@@ -1,0 +1,10 @@
+name: fedora-rpm
+shortdesc: Install Fedora RPM packages into EL-based images by overriding DNF releasever.
+
+example: |
+  type: fedora-rpm
+  releasever: "44"
+  repos:
+    - https://copr.fedorainfracloud.org/coprs/theblackdon/dcli-bootc/repo/fedora-44/theblackdon-dcli-bootc-fedora-44.repo
+  install:
+    - dcli-bootc
