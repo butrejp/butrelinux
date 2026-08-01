@@ -9,14 +9,6 @@ if [[ -z "${RELEASEVER}" ]]; then
     exit 1
 fi
 
-mkdir -p /etc/dnf/vars
-echo "${RELEASEVER}" > /etc/dnf/vars/releasever
-
-cleanup() {
-    rm -f /etc/dnf/vars/releasever
-}
-trap cleanup EXIT
-
 get_json_array REPOS 'try .["repos"][]' "$1"
 
 if [[ ${#REPOS[@]} -gt 0 ]]; then
@@ -26,13 +18,22 @@ if [[ ${#REPOS[@]} -gt 0 ]]; then
         REPO="${REPO//%RELEASEVER%/${RELEASEVER}}"
         REPO="${REPO//[$'\t\r\n ']}"
 
+        REPO_FILE="/etc/yum.repos.d/$(basename "${REPO}")"
+
         echo "Downloading repo file ${REPO}"
 
         curl -fLsS --retry 5 \
             "${REPO}" \
-            -o "/etc/yum.repos.d/$(basename "${REPO}")"
+            -o "${REPO_FILE}"
 
-        echo "Downloaded repo file ${REPO}"
+        # Replace Fedora release placeholders only in this repo.
+        # Do not change the system-wide DNF releasever because this
+        # image is based on EL and has EL repositories enabled.
+        sed -i \
+            "s/\$releasever/${RELEASEVER}/g" \
+            "${REPO_FILE}"
+
+        echo "Downloaded repo file ${REPO_FILE}"
     done
 fi
 
@@ -43,7 +44,9 @@ if [[ ${#KEYS[@]} -gt 0 ]]; then
 
     for KEY in "${KEYS[@]}"; do
         KEY="${KEY//%RELEASEVER%/${RELEASEVER}}"
-        rpm --import "${KEY//[$'\t\r\n ']}"
+        KEY="${KEY//[$'\t\r\n ']}"
+
+        rpm --import "${KEY}"
     done
 fi
 
