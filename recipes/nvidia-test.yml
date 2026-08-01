@@ -6,12 +6,20 @@ image-version: testing
 
 modules:
   - from-file: common.yml
-
+  
   - type: dnf
     install:
       packages:
         - nvtop
-
+        
+  - type: fedora-rpm
+    source: local
+    releasever: "44"
+    repos:
+      - https://copr.fedorainfracloud.org/coprs/theblackdon/dcli-bootc/repo/fedora-44/theblackdon-dcli-bootc-fedora-44.repo
+    install:
+      - dcli-bootc
+      
   - type: script
     scripts:
       - image-info-nvidia.sh
