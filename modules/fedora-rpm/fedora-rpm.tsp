@@ -2,7 +2,7 @@ import "@typespec/json-schema";
 
 using TypeSpec.JsonSchema;
 
-@jsonSchema("/modules/fedora-rpm-latest.json")
+@jsonSchema("modules/fedora-rpm-latest.json")
 model FedoraRpmModuleLatest {
   ...FedoraRpmModuleV1;
 }
