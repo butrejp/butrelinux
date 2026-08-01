@@ -1,5 +1,5 @@
 name: fedora-rpm
-shortdesc: Install Fedora RPM packages into EL-based images by overriding DNF releasever.
+shortdesc: Install Fedora RPM packages into non-Fedora images using dnf.
 
 example: |
   type: fedora-rpm
