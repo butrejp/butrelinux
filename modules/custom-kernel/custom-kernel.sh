@@ -2,6 +2,7 @@
 
 #### from https://github.com/jokokucing/Origami-Linux/blob/main/modules/custom-kernel/custom-kernel.sh
 #### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux, 8-10) portability.
+#### NOTE: this module is largely untested.  caveat emptor.
 
 set -eu
 
@@ -73,8 +74,9 @@ SIGNING_CERT=$(printf '%s' "$1"| jq -r '.sign.cert // ""')
 MOK_PASSWORD=$(printf '%s' "$1"| jq -r '.sign["mok-password"] // ""')
 SECURE_BOOT=false
 
-# Default kernel type is distro-dependent: CachyOS kernels are Fedora-only
-# (Fedora COPR builds), so EL falls back to ELRepo's mainline kernel instead.
+# Default kernel type is distro-dependent. CachyOS kernels are available on
+# Fedora and EL 9/10 via COPR, but EL still defaults to ELRepo unless the
+# user explicitly opts into a COPR kernel.
 if [ -z "${KERNEL_TYPE}" ]; then
     if [ "${IS_FEDORA}" = "true" ]; then
         KERNEL_TYPE="cachyos-lto"
@@ -185,11 +187,8 @@ TRANSIENT="${TRANSIENT} ${KERNEL_DEVEL_PKG}"
 
 case "${REPO_BACKEND}" in
 copr)
-    if [ "${IS_FEDORA}" != "true" ]; then
-        err "Kernel type '${KERNEL_TYPE}' is built via Fedora COPR (${COPR_REPO}) and is only available on Fedora-based images."
-        err "On EL use: elrepo-ml (or elrepo-lt, where ELRepo publishes it for your EL release)."
-        exit 1
-    fi
+    # CachyOS kernels are published via COPR for both Fedora and EL (EPEL 9/10).
+    : # no-op — valid on all supported distros
     ;;
 elrepo)
     if [ "${IS_EL}" != "true" ]; then
@@ -405,7 +404,6 @@ esac
 # ---------------------------------------------------------------------------
 
 log "Building v4l2loopback module for kernel: ${KERNEL_VERSION}"
-disable_akmodsbuild || exit 1
 
 log "Enabling RPM Fusion Free repo."
 if [ "${IS_FEDORA}" = "true" ]; then
@@ -420,18 +418,36 @@ dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts \
     akmod-v4l2loopback
 TRANSIENT="${TRANSIENT} akmod-v4l2loopback"
 
-akmods --force --verbose --kernels "${KERNEL_VERSION}" --kmod v4l2loopback
+# ELRepo kernels (kernel-ml/kernel-lt) do not provide kernel-uname-r to avoid
+# conflicting with the stock RHEL kernel. akmods builds the module fine, but
+# the DNF install step fails. We catch that and install the RPM manually.
+akmods --force --verbose --kernels "${KERNEL_VERSION}" --kmod v4l2loopback || true
 
-_fail_found=false
-for _f in /var/cache/akmods/v4l2loopback/*-for-"${KERNEL_VERSION}".failed.log; do
-    [ -f "${_f}" ] && _fail_found=true && break
-done
-if [ "${_fail_found}" = "true" ]; then
-    err "v4l2loopback akmod build failed:"
+# akmods leaves the built RPM in /var/cache/akmods/v4l2loopback/ even when
+# the install step fails. Find it and install with --nodeps.
+_kmod_rpm=$(find /var/cache/akmods/v4l2loopback -maxdepth 1 \
+    -name "kmod-v4l2loopback-*.rpm" ! -name "*failed*" 2>/dev/null | head -n1)
+
+if [ -n "$_kmod_rpm" ] && [ -f "$_kmod_rpm" ]; then
+    log "Installing built kmod RPM (bypassing kernel-uname-r dependency): ${_kmod_rpm}"
+    rpm -ivh --nodeps "$_kmod_rpm"
+    depmod -a "${KERNEL_VERSION}"
+    # Remove the failed log so it doesn't confuse later checks
+    rm -f /var/cache/akmods/v4l2loopback/*.failed.log
+else
+    # No RPM found — check if it was a genuine build failure
+    _fail_found=false
     for _f in /var/cache/akmods/v4l2loopback/*-for-"${KERNEL_VERSION}".failed.log; do
-        [ -f "${_f}" ] && cat "${_f}"
+        [ -f "${_f}" ] && _fail_found=true && break
     done
-    restore_akmodsbuild
+    if [ "${_fail_found}" = "true" ]; then
+        err "v4l2loopback akmod build failed:"
+        for _f in /var/cache/akmods/v4l2loopback/*-for-"${KERNEL_VERSION}".failed.log; do
+            [ -f "${_f}" ] && cat "${_f}"
+        done
+        exit 1
+    fi
+    err "v4l2loopback kmod RPM not found after build"
     exit 1
 fi
 
