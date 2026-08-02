@@ -418,24 +418,26 @@ dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts \
     akmod-v4l2loopback
 TRANSIENT="${TRANSIENT} akmod-v4l2loopback"
 
-# ELRepo kernels (kernel-ml/kernel-lt) do not provide kernel-uname-r to avoid
-# conflicting with the stock RHEL kernel. akmods builds the module fine, but
-# the DNF install step fails. We catch that and install the RPM manually.
+# Some kernels (e.g. ELRepo kernel-ml) intentionally do not provide
+# kernel-uname-r, causing akmods' DNF install step to fail even though the
+# build itself succeeds. We ignore that error and handle installation manually.
 akmods --force --verbose --kernels "${KERNEL_VERSION}" --kmod v4l2loopback || true
 
-# akmods leaves the built RPM in /var/cache/akmods/v4l2loopback/ even when
-# the install step fails. Find it and install with --nodeps.
 _kmod_rpm=$(find /var/cache/akmods/v4l2loopback -maxdepth 1 \
     -name "kmod-v4l2loopback-*.rpm" ! -name "*failed*" 2>/dev/null | head -n1)
 
 if [ -n "$_kmod_rpm" ] && [ -f "$_kmod_rpm" ]; then
-    log "Installing built kmod RPM (bypassing kernel-uname-r dependency): ${_kmod_rpm}"
-    rpm -ivh --nodeps "$_kmod_rpm"
+    _rpm_name=$(rpm -qp --queryformat '%{NAME}\n' "$_kmod_rpm" 2>/dev/null)
+    if [ -n "$_rpm_name" ] && ! rpm -q "$_rpm_name" >/dev/null 2>&1; then
+        log "Installing built kmod RPM (bypassing kernel-uname-r dependency): ${_kmod_rpm}"
+        rpm -ivh --nodeps "$_kmod_rpm"
+    else
+        log "kmod RPM already installed, skipping manual install."
+    fi
     depmod -a "${KERNEL_VERSION}"
-    # Remove the failed log so it doesn't confuse later checks
     rm -f /var/cache/akmods/v4l2loopback/*.failed.log
 else
-    # No RPM found — check if it was a genuine build failure
+    # No cached RPM — determine if it was a real build failure
     _fail_found=false
     for _f in /var/cache/akmods/v4l2loopback/*-for-"${KERNEL_VERSION}".failed.log; do
         [ -f "${_f}" ] && _fail_found=true && break
@@ -447,8 +449,11 @@ else
         done
         exit 1
     fi
-    err "v4l2loopback kmod RPM not found after build"
-    exit 1
+    # akmods may have succeeded and cleaned up the RPM itself. Verify the module exists.
+    if ! find "/lib/modules/${KERNEL_VERSION}/extra/v4l2loopback/" -name "v4l2loopback.ko*" | grep -q .; then
+        err "v4l2loopback kmod not found after build"
+        exit 1
+    fi
 fi
 
 log "Cleaning RPM Fusion Free repo."
