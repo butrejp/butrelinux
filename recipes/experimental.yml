@@ -21,7 +21,7 @@ modules:
 
   - type: custom-kernel
     source: local
-    kernel: cachyos-lto
+    kernel: elrepo-ml
     initramfs: true
   
   - type: soar
