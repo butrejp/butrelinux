@@ -488,16 +488,28 @@ if [ "${NVIDIA}" = "true" ]; then
         exit 1
     fi
 
-    # 2. Fetch the latest NVIDIA version directly
-    NVIDIA_LATEST_URL="https://download.nvidia.com/XFree86/Linux-x86_64/latest.txt"
-    latest_info="$(curl -fsSL "$NVIDIA_LATEST_URL")"
-    NVIDIA_VERSION="$(awk '{print $1}' <<< "$latest_info")"
-    NVIDIA_RUN_PATH="$(awk '{print $2}' <<< "$latest_info")"
-    NVIDIA_RUN="${NVIDIA_RUN_PATH##*/}"
-    NVIDIA_URL="https://download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_RUN_PATH}"
+    # 2. Resolve the latest NVIDIA version from the directory listing.
+    #    latest.txt tracks the stable/production branch; scanning the
+    #    directory picks up the newest feature branch as well.
+    #    NOTE: feature branch drivers (e.g. 610.x) may be beta quality.
+    log "Resolving latest NVIDIA version from download.nvidia.com..."
+    NVIDIA_VERSION=$(curl -fsSL https://download.nvidia.com/XFree86/Linux-x86_64/ | \
+        grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | \
+        sort -V | \
+        tail -n 1)
+
+    if [ -z "$NVIDIA_VERSION" ]; then
+        err "Failed to resolve latest NVIDIA version from directory listing."
+        exit 1
+    fi
+
+    NVIDIA_RUN="NVIDIA-Linux-x86_64-${NVIDIA_VERSION}.run"
+    NVIDIA_URL="https://download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_VERSION}/${NVIDIA_RUN}"
+
+    log "Selected NVIDIA version: ${NVIDIA_VERSION}"
+    log "Downloading: ${NVIDIA_URL}"
 
     _tmpdir="$(mktemp -d)"
-    log "Downloading NVIDIA ${NVIDIA_VERSION} installer..."
     curl -fL "$NVIDIA_URL" -o "$_tmpdir/$NVIDIA_RUN"
     chmod +x "$_tmpdir/$NVIDIA_RUN"
 
