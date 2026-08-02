@@ -94,7 +94,7 @@ modules:
           title: Flathub Beta
         install:
           - org.kde.discover
-          
+
   - type: fedora-rpm
     source: local
     releasever: "44"
@@ -104,3 +104,4 @@ modules:
       - dcli-bootc
 
   - type: clean-repos
+    source: local
