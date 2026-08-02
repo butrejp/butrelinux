@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #### derived from https://github.com/jokokucing/Origami-Linux/blob/main/modules/custom-kernel/custom-kernel.sh
-#### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux, 8-10) portability.
+#### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux) portability.  DNF5 is a hard requirement for this version.
 #### NOTE: this module is largely untested.  caveat emptor.
 
 set -eu
@@ -478,10 +478,10 @@ if [ "${NVIDIA}" = "true" ]; then
 
     # 1. Added explicit Mesa drivers to ensure software fallback works in VMs
     NVIDIA_BUILD_TOOLS="dkms gcc make perl elfutils-libelf-devel checkpolicy selinux-policy-devel clang llvm lld"
-    NVIDIA_RUNTIME_DEPS="libglvnd libglvnd-egl libglvnd-gles libglvnd-glx libglvnd-opengl egl-x11 egl-wayland2 egl-gbm xorg-x11-server-Xorg mesa-dri-drivers mesa-vulkan-drivers mesa-libEGL mesa-libGL"
+    NVIDIA_RUNTIME_DEPS="libglvnd libglvnd-egl libglvnd-gles libglvnd-glx libglvnd-opengl egl-x11 egl-wayland2 egl-gbm xorg-x11-server-Xorg xorg-x11-server-Xwayland mesa-dri-drivers mesa-vulkan-drivers mesa-libEGL mesa-libGL"
 
     # shellcheck disable=SC2086
-    dnf install -y --setopt=install_weak_deps=False $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS curl tar bzip2 policycoreutils
+    dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts --setopt=skip_unavailable=1 $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS curl tar bzip2 policycoreutils
 
     if [[ ! -d "$KERNEL_SOURCE" ]]; then
         err "Missing kernel source path after installing devel package: $KERNEL_SOURCE"
