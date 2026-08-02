@@ -105,3 +105,8 @@ also got a unified iso in the works but matrix builds are easy so split installe
 
 20260715 UPDATE  
 unified iso was easier than I thought.  they've been available since yesterday.  still tweaking, so expect fresh releases to come regularly, but installer behavior shouldn't change much.  once I get it all sorted out it'll be monthly builds pushed automatically
+
+### new experimental branch
+20260802  
+this isn't really for users (though it might be worth checking out in a VM), but you can start to see some ideas of where I'm taking this.  for example, I just crammed the cachyos lto kernel onto an el10 userspace.  I've also started building a module to inject fedora packages in a more sane way than I had previously done (and abandoned for good reason).  
+if a shakedown run clears then these things will make it into the standard images.  the ultimate goal is to hopefully make multilib happen on el10 and ship a gaming variant that doesn't rely on giving podman your gpu.  we'll see how that goes though, don't expect a miracle.    
