@@ -13,6 +13,27 @@ modules:
   - type: dnf
     remove:
       packages:
+        - mutter
+        - mutter-common
+        - gnome-shell-common
+        - gnome-settings-daemon
+        - gnome-control-center-filesystem
+        - gnome-tour
+        - gnome-user-docs
+        - gnome-remote-desktop
+        - nautilus-extensions
+        - xdg-desktop-portal-gnome
+        - gnome50-el10-compat
+        - tecla
+        - gjs
+        - gnome-bluetooth
+        - gnome-bluetooth-libs
+        - gnome-keyring
+        - gnome-keyring-pam
+        - gnome-online-accounts
+        - gnome-online-accounts-libs
+        - gnome-menus
+        - gnome-desktop4
         - gnome-initial-setup
         - gnome-session-wayland-session
         - gnome-session
@@ -23,8 +44,13 @@ modules:
         - gnome-control-center
         - nautilus
         - ptyxis
+
     install:
       packages:
+        - kde-partitionmanager
+        - krfb
+        - krdc
+        - khelpcenter
         - policycoreutils
         - policycoreutils-python-utils
         - policycoreutils-devel
@@ -102,6 +128,10 @@ modules:
       - https://copr.fedorainfracloud.org/coprs/theblackdon/dcli-bootc/repo/fedora-44/theblackdon-dcli-bootc-fedora-44.repo
     install:
       - dcli-bootc
+
+  - type: script
+    snippets:
+      - dnf autoremove -y
 
   - type: clean-repos
     source: local
