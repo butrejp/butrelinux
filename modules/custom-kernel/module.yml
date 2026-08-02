@@ -22,3 +22,4 @@ example: |
     mount:
       type: file
       destination: /tmp/certs/MOK.pem
+      

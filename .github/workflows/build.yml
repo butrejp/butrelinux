@@ -6,18 +6,15 @@ on:
   push:
     paths-ignore:
       - "**.md"
-      - ".github/workflows/build_iso.yml"
-      - ".github/workflows/build_iso_test.yml"
+      - ".github/workflows/build_iso_unified.yml"
       - ".github/workflows/build_testing.yml"
       - ".github/heartbeat.txt"
       - "**.cfg"
-      - "recipes/hwe-test.yml"
-      - "recipes/nvidia-test.yml"
+      - "recipes/experimental.yml"
   pull_request:
     paths-ignore:
       - "**.md"
-      - ".github/workflows/build_iso.yml"
-      - ".github/workflows/build_iso_test.yml"
+      - ".github/workflows/build_iso_unified.yml"
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time

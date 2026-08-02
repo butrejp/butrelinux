@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#### from https://github.com/jokokucing/Origami-Linux/blob/main/modules/custom-kernel/custom-kernel.sh
+#### derived from https://github.com/jokokucing/Origami-Linux/blob/main/modules/custom-kernel/custom-kernel.sh
 #### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux, 8-10) portability.
 #### NOTE: this module is largely untested.  caveat emptor.
 
