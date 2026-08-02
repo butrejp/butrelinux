@@ -1,0 +1,24 @@
+name: custom-kernel
+shortdesc: Install a custom kernel on Fedora or EL (RHEL/CentOS Stream/Rocky/AlmaLinux) based images.
+example: |
+  type: custom-kernel
+  kernel: cachyos-lto   # Default: cachyos-lto on Fedora, elrepo-ml on EL
+                        # Fedora (COPR-backed):  cachyos, cachyos-lts, cachyos-rt, cachyos-lto, cachyos-lts-lto
+                        # EL (ELRepo-backed):    elrepo-ml, elrepo-lt (elrepo-lt not published for every EL release)
+  nvidia: true          # Default: false — also install the nvidia kmod
+  initramfs: true       # Default: false — generate a dracut initramfs for the installed kernel
+  sign:                 # Optional — omit the entire block to disable SecureBoot signing
+    key: /tmp/certs/MOK.key
+    cert: /tmp/certs/MOK.pem
+    mok-password: BlueBuild
+  secrets:
+  - type: file
+    source: ./MOK.key
+    mount:
+      type: file
+      destination: /tmp/certs/MOK.key
+  - type: file
+    source: ./MOK.pem
+    mount:
+      type: file
+      destination: /tmp/certs/MOK.pem

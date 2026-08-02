@@ -40,6 +40,7 @@ jobs:
         recipe:
           - hwe-test.yml
           - nvidia-test.yml
+          - experimental.yml
     steps:
       # the build is fully handled by the reusable github action
       - name: Build Custom Image

@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: butrelinux-experimental
+description: Bluefin LTS HWE with KDE Plasma (Intel/AMD)
+base-image: ghcr.io/projectbluefin/bluefin-lts
+image-version: stable
+
+modules:
+  - from-file: common.yml
+  
+  - type: fedora-rpm
+    source: local
+    releasever: "44"
+    repos:
+      - https://copr.fedorainfracloud.org/coprs/theblackdon/dcli-bootc/repo/fedora-44/theblackdon-dcli-bootc-fedora-44.repo
+    install:
+      - dcli-bootc
+
+  - type: script
+    scripts:
+      - image-info-hwe.sh
+
+  - type: custom-kernel
+    source: local
+    kernel: cachyos-lto
+    initramfs: true
+  
+  - type: soar
+  - type: signing
