@@ -1,17 +1,12 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-name: butrelinux-nvidia-test
-description: Bluefin LTS HWE with KDE Plasma (Nvidia) testing
-base-image: ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia
-image-version: testing
+name: butrelinux-experimental-nvidia
+description: Bluefin LTS HWE with KDE Plasma (Nvidia)
+base-image: ghcr.io/projectbluefin/bluefin-lts
+image-version: stable
 
 modules:
   - from-file: common.yml
   
-  - type: dnf
-    install:
-      packages:
-        - nvtop
-        
   - type: fedora-rpm
     source: local
     releasever: "44"
@@ -19,10 +14,17 @@ modules:
       - https://copr.fedorainfracloud.org/coprs/theblackdon/dcli-bootc/repo/fedora-44/theblackdon-dcli-bootc-fedora-44.repo
     install:
       - dcli-bootc
-      
+
   - type: script
     scripts:
       - image-info-nvidia.sh
 
+  - type: custom-kernel
+    source: local
+    kernel: cachyos-lto
+    initramfs: true
+    nvidia: true
+  
   - type: soar
   - type: signing
+  

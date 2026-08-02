@@ -37,6 +37,7 @@ jobs:
       matrix:
         recipe:
           - experimental.yml
+          - experimental-nvidia.yml
 
     steps:
       # the build is fully handled by the reusable github action
