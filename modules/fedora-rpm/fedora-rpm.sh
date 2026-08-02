@@ -9,6 +9,9 @@ if [[ -z "${RELEASEVER}" ]]; then
     exit 1
 fi
 
+# Track repo files added during this run for cleanup
+ADDED_REPOS=()
+
 get_json_array REPOS 'try .["repos"][]' "$1"
 
 if [[ ${#REPOS[@]} -gt 0 ]]; then
@@ -34,6 +37,9 @@ if [[ ${#REPOS[@]} -gt 0 ]]; then
             "${REPO_FILE}"
 
         echo "Downloaded repo file ${REPO_FILE}"
+
+        # Track this file for cleanup
+        ADDED_REPOS+=("${REPO_FILE}")
     done
 fi
 
@@ -60,3 +66,14 @@ if [[ ${#INSTALL_PKGS[@]} -gt 0 ]]; then
 fi
 
 dnf clean all
+
+# Clean up added repositories on successful completion
+if [[ ${#ADDED_REPOS[@]} -gt 0 ]]; then
+    echo "Removing added repositories"
+    for REPO_FILE in "${ADDED_REPOS[@]}"; do
+        if [[ -f "${REPO_FILE}" ]]; then
+            echo "Removing ${REPO_FILE}"
+            rm -f "${REPO_FILE}"
+        fi
+    done
+fi
