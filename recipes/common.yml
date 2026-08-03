@@ -109,6 +109,7 @@ modules:
         - gdm.service
       masked:
         - rechunker-group-fix.service
+        - systemd-oomd.service
 
   - type: default-flatpaks
     configurations:
