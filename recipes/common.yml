@@ -23,7 +23,6 @@ modules:
         - gnome-remote-desktop
         - nautilus-extensions
         - xdg-desktop-portal-gnome
-        - gnome50-el10-compat
         - tecla
         - gjs
         - gnome-bluetooth
