@@ -47,7 +47,6 @@ modules:
 
     install:
       packages:
-        - jetbrains-mono-fonts-all
         - kde-partitionmanager
         - krfb
         - krdc
@@ -132,3 +131,10 @@ modules:
       - dcli-bootc
 
   - type: soar
+  
+  - type: fonts
+    fonts:
+      nerd-fonts:
+       - JetBrainsMono
+       - NerdFontsSymbolsOnly
+       - NotoSansMono
