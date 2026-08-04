@@ -25,4 +25,5 @@ for repo in $ACTIVE_REPOS; do
 done
 
 # 4. Flush the metadata cache so subsequent modules don't pull from disabled repos
+dnf autoremove -y
 dnf clean all

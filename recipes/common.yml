@@ -129,9 +129,11 @@ modules:
     install:
       - dcli-bootc
 
-  - type: script
-    snippets:
-      - dnf autoremove -y
+  - type: soar
 
-  - type: clean-repos
-    source: local
+  - type: fonts
+    fonts:
+      nerd-fonts:
+       - JetBrainsMono
+       - NerdFontsSymbolsOnly
+       - Noto

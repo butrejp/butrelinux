@@ -16,6 +16,5 @@ modules:
     scripts:
       - image-info-nvidia.sh
 
-  - type: soar
-  - type: signing
-  
+  - from-file: end.yml
+    

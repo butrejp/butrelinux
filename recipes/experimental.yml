@@ -15,6 +15,5 @@ modules:
     source: local
     kernel: cachyos-lto
     initramfs: true
-  
-  - type: soar
-  - type: signing
+
+  - from-file: end.yml

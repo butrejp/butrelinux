@@ -11,6 +11,5 @@ modules:
     scripts:
       - image-info-hwe.sh
   
-  - type: soar
-  - type: signing
+  - from-file: end.yml
   
