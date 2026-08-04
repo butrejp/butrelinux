@@ -34,5 +34,13 @@ sed -i "s|^SUPPORT_URL=.*|SUPPORT_URL=\"$SUPPORT_URL\"|" /usr/lib/os-release
 sed -i "s|^LOGO=.*|LOGO=\"kde-logo-icon\"|" /usr/lib/os-release
 sed -i "s|^DEFAULT_HOSTNAME=.*|DEFAULT_HOSTNAME=\"$IMAGE_NAME\"|" /usr/lib/os-release
 
-# Remove specific Red Hat/CentOS bugzilla lines to keep it clean
 sed -i "/^REDHAT_BUGZILLA_PRODUCT=/d; /^REDHAT_BUGZILLA_PRODUCT_VERSION=/d; /^REDHAT_SUPPORT_PRODUCT=/d; /^REDHAT_SUPPORT_PRODUCT_VERSION=/d" /usr/lib/os-release
+
+# Extract the existing VERSION_ID to keep the CPE version dynamic
+VERSION_ID=$(grep '^VERSION_ID=' /usr/lib/os-release | cut -d'"' -f2)
+
+# Update CPE_NAME and remaining upstream vendor metadata
+sed -i "s|^CPE_NAME=.*|CPE_NAME=\"cpe:2.3:o:butre:$IMAGE_NAME:${VERSION_ID}:*:*:*:*:*:*:*\"|" /usr/lib/os-release
+sed -i "s|^VENDOR_NAME=.*|VENDOR_NAME=\"butre\"|" /usr/lib/os-release
+sed -i "s|^VENDOR_URL=.*|VENDOR_URL=\"$HOME_URL\"|" /usr/lib/os-release
+sed -i "s|^BUG_REPORT_URL=.*|BUG_REPORT_URL=\"$SUPPORT_URL\"|" /usr/lib/os-release
