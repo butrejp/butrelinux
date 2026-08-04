@@ -131,10 +131,10 @@ modules:
       - dcli-bootc
 
   - type: soar
-  
+
   - type: fonts
     fonts:
       nerd-fonts:
        - JetBrainsMono
        - NerdFontsSymbolsOnly
-       - NotoSansMono
+       - Noto
