@@ -11,5 +11,5 @@ modules:
     scripts:
       - image-info-lts.sh
   
-  from-file: end.yml
+  - from-file: end.yml
   
