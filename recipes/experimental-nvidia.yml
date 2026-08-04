@@ -23,6 +23,4 @@ modules:
     initramfs: true
     nvidia: true
   
-  - type: soar
-  - type: signing
-  
+  - from-file: end.yml
