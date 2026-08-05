@@ -550,6 +550,7 @@ if [ "${NVIDIA}" = "true" ]; then
 blacklist nouveau
 options nouveau modeset=0
 options nvidia-drm modeset=1 fbdev=1
+options nvidia NVreg_PreserveVideoMemoryAllocations=1
 EOF
     chmod 0644 /etc/modprobe.d/nvidia.conf
 
