@@ -1,7 +1,8 @@
 #!/bin/sh
 
 #### derived from https://github.com/jokokucing/Origami-Linux/blob/main/modules/custom-kernel/custom-kernel.sh
-#### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux) portability.  DNF5 is a hard requirement for this version.
+#### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux) portability.
+#### DNF5 is a soft requirement, however DNF4 should work, just may require some minor tweaks.
 #### NOTE: this module is largely untested.  caveat emptor.
 
 set -eu
