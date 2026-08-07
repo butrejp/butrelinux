@@ -185,7 +185,7 @@ elrepo-lt)
     ;;
 esac
 
-TRANSIENT="${TRANSIENT} ${KERNEL_DEVEL_PKG}"
+TRANSIENT="${TRANSIENT}"
 
 case "${REPO_BACKEND}" in
 copr)
@@ -488,9 +488,9 @@ if [ "${ZFS}" = "true" ]; then
         exit 1
     fi
 
-    ZFS_BUILD_TOOLS="gcc make elfutils-libelf-devel"
+    ZFS_BUILD_TOOLS="elfutils-libelf-devel"
     # shellcheck disable=SC2086
-    dnf -y install dkms $ZFS_BUILD_TOOLS
+    dnf -y install dkms gcc make $ZFS_BUILD_TOOLS
     dnf mark install dkms
 
     if [ "${IS_FEDORA}" = "true" ]; then
@@ -622,11 +622,11 @@ if [ "${NVIDIA}" = "true" ]; then
     log "Starting upstream NVIDIA payload build for kernel ${KERNEL_VERSION}."
 
     # 1. Added explicit Mesa drivers to ensure software fallback works in VMs
-    NVIDIA_BUILD_TOOLS="gcc make perl elfutils-libelf-devel checkpolicy selinux-policy-devel clang llvm lld"
+    NVIDIA_BUILD_TOOLS="perl elfutils-libelf-devel checkpolicy selinux-policy-devel clang llvm lld"
     NVIDIA_RUNTIME_DEPS="libglvnd libglvnd-egl libglvnd-gles libglvnd-glx libglvnd-opengl egl-x11 egl-wayland2 egl-gbm xorg-x11-server-Xwayland mesa-dri-drivers mesa-vulkan-drivers mesa-libEGL mesa-libGL"
 
     # shellcheck disable=SC2086
-    dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts --setopt=skip_unavailable=1 $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS dkms curl tar bzip2 policycoreutils
+    dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts --setopt=skip_unavailable=1 $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS dkms curl tar bzip2 policycoreutils gcc make
 
     if [[ ! -d "$KERNEL_SOURCE" ]]; then
         err "Missing kernel source path after installing devel package: $KERNEL_SOURCE"
