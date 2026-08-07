@@ -522,7 +522,7 @@ if [ "${ZFS}" = "true" ]; then
 
     TRANSIENT="${TRANSIENT} ${ZFS_BUILD_TOOLS}"
 fi
-fi
+
 
 # ---------------------------------------------------------------------------
 # Build Nvidia via upstream .run payload
