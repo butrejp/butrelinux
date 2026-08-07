@@ -131,7 +131,7 @@ cachyos-lto)
     REPO_BACKEND="copr"
     COPR_REPO="bieszczaders/kernel-cachyos-lto"
     KERNEL_PKG="kernel-cachyos-lto"
-    KERNEL_DEVEL_PKG="kernel-cachyos-lto-devel-matched"
+    KERNEL_DEVEL_PKG="kernel-cachyos-lto-devel-matched kernel-cachyos-lto-devel"
     KERNEL_PACKAGES="kernel-cachyos-lto kernel-cachyos-lto-core kernel-cachyos-lto-modules kernel-cachyos-lto-devel-matched"
     ;;
 cachyos-lts-lto)
