@@ -5,7 +5,7 @@ set -euo pipefail
 # /usr/share/ublue-os/image-info.json and patches /usr/lib/os-release.
 #
 # Required config:
-#   variant: the image variant suffix (e.g. "lts", "stable", "beta")
+#   variant: the image variant suffix (e.g. "lts", "stable", "nvidia")
 #
 # Optional config overrides (sensible defaults are provided):
 #   vendor, name, pretty_name, tag, like, logo,
@@ -15,16 +15,16 @@ set -euo pipefail
 # Parse module configuration (JSON passed as $1)
 # ---------------------------------------------------------------------------
 
-variant=$(echo "$1" | yq -r '.variant')
-vendor=$(echo "$1" | yq -r '.vendor // "butrejp"')
-name=$(echo "$1" | yq -r '.name // "butrelinux"')
-pretty_name=$(echo "$1" | yq -r '.pretty_name // "butrelinux"')
-tag=$(echo "$1" | yq -r '.tag // "latest"')
-like=$(echo "$1" | yq -r '.like // "centos rhel fedora"')
-logo=$(echo "$1" | yq -r '.logo // "kde-logo-icon"')
-home_url=$(echo "$1" | yq -r '.home_url // "https://github.com/butrejp/butrelinux"')
-support_url=$(echo "$1" | yq -r '.support_url // "https://github.com/butrejp/butrelinux/issues"')
-documentation_url=$(echo "$1" | yq -r '.documentation_url // "https://github.com/butrejp/butrelinux/wiki"')
+variant=$(jq -r '.variant // empty' <<< "$1")
+vendor=$(jq -r '.vendor // "butrejp"' <<< "$1")
+name=$(jq -r '.name // "butrelinux"' <<< "$1")
+pretty_name=$(jq -r '.pretty_name // "butrelinux"' <<< "$1")
+tag=$(jq -r '.tag // "latest"' <<< "$1")
+like=$(jq -r '.like // "centos rhel fedora"' <<< "$1")
+logo=$(jq -r '.logo // "kde-logo-icon"' <<< "$1")
+home_url=$(jq -r '.home_url // "https://github.com/butrejp/butrelinux"' <<< "$1")
+support_url=$(jq -r '.support_url // "https://github.com/butrejp/butrelinux/issues"' <<< "$1")
+documentation_url=$(jq -r '.documentation_url // "https://github.com/butrejp/butrelinux/wiki"' <<< "$1")
 
 # Validate required field
 if [[ -z "$variant" || "$variant" == "null" ]]; then
@@ -39,7 +39,6 @@ fi
 VERSION_ID=$(grep '^VERSION_ID=' /usr/lib/os-release | cut -d'"' -f2)
 FULL_IMAGE_NAME="${name}-${variant}"
 
-# Use BlueBuild's IMAGE_REGISTRY env var if available, otherwise fall back
 if [[ -n "${IMAGE_REGISTRY:-}" ]]; then
     image_ref="ostree-image-signed:docker://${IMAGE_REGISTRY}/${FULL_IMAGE_NAME}"
 else
@@ -69,7 +68,6 @@ EOF
 
 echo "Patching /usr/lib/os-release..."
 
-# Use "|" as sed delimiter to avoid issues with "/" in URLs
 sed -i "s|^VARIANT_ID=.*|VARIANT_ID=\"${variant}\"|" /usr/lib/os-release
 sed -i "s|^PRETTY_NAME=.*|PRETTY_NAME=\"${pretty_name}\"|" /usr/lib/os-release
 sed -i "s|^NAME=.*|NAME=\"${pretty_name}\"|" /usr/lib/os-release
