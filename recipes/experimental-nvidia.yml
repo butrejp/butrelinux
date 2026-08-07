@@ -6,13 +6,20 @@ image-version: stable
 
 modules:
   - from-file: common.yml
-  
   - type: dnf
-    install:
+    remove:
       packages:
-        - nvtop
-
-
+        - zfs
+        - libnvpair3
+        - libzfs7
+        - kmod-zfs
+        - python3-pyzfs
+        - libuutil3
+        - libzpool7
+        - kernel-headers
+        - kernel-tools
+        - kernel-tools-libs
+        
   - type: script
     scripts:
       - image-info-nvidia.sh
@@ -21,6 +28,7 @@ modules:
     source: local
     kernel: cachyos-lto
     initramfs: true
+    zfs: true
     nvidia: true
-  
+
   - from-file: end.yml
