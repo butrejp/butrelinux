@@ -43,6 +43,16 @@ modules:
         - gnome-control-center
         - nautilus
         - ptyxis
+        - zfs
+        - libnvpair3
+        - libzfs7
+        - kmod-zfs
+        - python3-pyzfs
+        - libuutil3
+        - libzpool7
+        - kernel-headers
+        - kernel-tools
+        - kernel-tools-libs
 
     install:
       packages:

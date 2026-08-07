@@ -6,10 +6,9 @@ image-version: stable
 
 modules:
   - from-file: common.yml
+  
+  - type: butre-image-info
+    source: local
+    variant: lts
 
-  - type: script
-    scripts:
-      - image-info-lts.sh
-  
   - from-file: end.yml
-  

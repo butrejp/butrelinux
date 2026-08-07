@@ -6,10 +6,16 @@ image-version: stable
 
 modules:
   - from-file: common.yml
+  
+  - type: butre-image-info
+    source: local
+    variant: hwe
 
-  - type: script
-    scripts:
-      - image-info-hwe.sh
-  
+  - type: custom-kernel
+    source: local
+    kernel: cachyos-lto
+    initramfs: true
+    zfs: true
+    nvidia: false
+
   - from-file: end.yml
-  
