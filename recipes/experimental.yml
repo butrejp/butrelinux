@@ -15,5 +15,6 @@ modules:
     source: local
     kernel: cachyos-lto
     initramfs: true
+    zfs: true
 
   - from-file: end.yml

@@ -70,6 +70,7 @@ fi
 KERNEL_TYPE=$(printf '%s' "$1" | jq -r '.kernel // empty')
 INITRAMFS=$(printf '%s' "$1"   | jq -r '.initramfs // false')
 NVIDIA=$(printf '%s' "$1"      | jq -r '.nvidia // false')
+ZFS=$(printf '%s' "$1"         | jq -r '.zfs // false')
 SIGNING_KEY=$(printf '%s' "$1" | jq -r '.sign.key // ""')
 SIGNING_CERT=$(printf '%s' "$1"| jq -r '.sign.cert // ""')
 MOK_PASSWORD=$(printf '%s' "$1"| jq -r '.sign["mok-password"] // ""')
@@ -329,12 +330,6 @@ EOF
 # ---------------------------------------------------------------------------
 # EL prerequisite repos (EPEL + CRB/PowerTools)
 # ---------------------------------------------------------------------------
-# On Fedora, akmods/dkms/build tooling ship in Fedora's own repos. On EL the
-# akmods framework itself (needed a few steps down) and dkms (used later so
-# any DKMS-based third-party kmods get rebuilt against the swapped-in kernel
-# on first boot) come from EPEL, and some -devel packages live behind the
-# CRB (EL9/10) / PowerTools (EL8) repo, which is disabled by default. This
-# has to happen before we try to install the kernel + akmods below.
 
 if [ "${IS_EL}" = "true" ]; then
     log "Enabling EPEL and CRB/PowerTools repos."
@@ -462,6 +457,68 @@ dnf -y remove rpmfusion-free-release
 rm -f /etc/yum.repos.d/rpmfusion-free*.repo
 
 # restore_akmodsbuild
+
+# ---------------------------------------------------------------------------
+# Build OpenZFS (DKMS)
+# ---------------------------------------------------------------------------
+# ZFS isn't in RPM Fusion (its CDDL license keeps it out of the akmods/RPM
+# Fusion ecosystem entirely), and OpenZFS's own precompiled "kABI-tracking
+# kmod" packages are only verified against the distro's own stock kernel -
+# neither applies to a swapped-in custom kernel. This always builds via DKMS
+# against ${KERNEL_VERSION} explicitly, which is also the zfs-release repo's
+# default mode on both Fedora and EL, so no repo-switching is needed.
+#
+# NOTE: DKMS builds can fail against very new/non-distribution kernels
+# (elrepo-ml especially, and fresh CachyOS bumps) if OpenZFS hasn't caught
+# up to a recent kernel API change yet - that's an upstream compatibility
+# gap, not a bug here. Check https://github.com/openzfs/zfs/issues if the
+# build below fails.
+#
+# NOTE: zfs-dkms/dkms are deliberately NOT added to TRANSIENT. Removing
+# zfs-dkms via dnf fires its %preun, which calls `dkms remove` and deletes
+# the very .ko files we just built for ${KERNEL_VERSION} - unlike akmods'
+# kmod-* packages (a separate, already-compiled RPM from the akmod-*
+# build-only package), DKMS has no such split: the build tooling and the
+# built module are the same package here, so it stays installed.
+
+if [ "${ZFS}" = "true" ]; then
+    log "Building OpenZFS (DKMS) for kernel: ${KERNEL_VERSION}"
+
+    ZFS_BUILD_TOOLS="gcc make elfutils-libelf-devel"
+    # shellcheck disable=SC2086
+    dnf -y install dkms $ZFS_BUILD_TOOLS
+
+    if [ "${IS_FEDORA}" = "true" ]; then
+        dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
+    else
+        dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-0$(rpm --eval '%{dist}').noarch.rpm"
+    fi
+
+    # Do NOT switch the repo to zfs-kmod/*-kmod - those precompiled kABI
+    # kmods only target the distro's own stock kernel, never our custom one.
+    dnf -y install zfs
+
+    _zfs_ver=$(rpm -q --queryformat '%{VERSION}\n' zfs-dkms 2>/dev/null || rpm -q --queryformat '%{VERSION}\n' zfs)
+    log "Building OpenZFS ${_zfs_ver} DKMS module for ${KERNEL_VERSION}."
+    if ! dkms install -m zfs -v "${_zfs_ver}" -k "${KERNEL_VERSION}" --force; then
+        err "OpenZFS DKMS build failed for kernel ${KERNEL_VERSION}."
+        err "This is usually an upstream OpenZFS/kernel compatibility gap - check https://github.com/openzfs/zfs/issues."
+        exit 1
+    fi
+
+    if ! find "/usr/lib/modules/${KERNEL_VERSION}" -name "zfs.ko*" | grep -q .; then
+        err "zfs.ko not found under /usr/lib/modules/${KERNEL_VERSION} after DKMS build."
+        exit 1
+    fi
+
+    depmod "${KERNEL_VERSION}"
+
+    log "Cleaning up ZFS repo configuration."
+    dnf -y remove zfs-release || true
+    rm -f /etc/yum.repos.d/zfs*.repo
+
+    TRANSIENT="${TRANSIENT} ${ZFS_BUILD_TOOLS}"
+fi
 
 # ---------------------------------------------------------------------------
 # Build Nvidia via upstream .run payload
