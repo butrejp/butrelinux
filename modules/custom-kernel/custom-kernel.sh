@@ -491,18 +491,21 @@ if [ "${ZFS}" = "true" ]; then
     if [ "${IS_FEDORA}" = "true" ]; then
         dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
     else
-        dnf -y install "http://download.zfsonlinux.org/epel-testing/10.2/zfs-release-3-1.el10.noarch.rpm"
+        dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
     fi
 
-    # Do NOT switch the repo to zfs-kmod/*-kmod - those precompiled kABI
-    # kmods only target the distro's own stock kernel, never our custom one.
-    dnf -y install zfs
+    # zfs-dkms Requires: kernel-devel <= 6.17.999, but CachyOS 7.1.5 provides
+    # kernel-devel = 7.1.5 which fails the version check. Download and force-
+    # install to bypass the artificial version bound.
+    dnf -y download --disableexcludes=all zfs zfs-dkms
+    rpm -Uvh zfs-*.rpm zfs-dkms-*.rpm --nodeps
+    rm -f zfs-*.rpm zfs-dkms-*.rpm
 
-    _zfs_ver=$(rpm -q --queryformat '%{VERSION}\n' zfs-dkms 2>/dev/null || rpm -q --queryformat '%{VERSION}\n' zfs)
+    _zfs_ver=$(rpm -q --queryformat '%{VERSION}\n' zfs-dkms 2>/dev/null)
     log "Building OpenZFS ${_zfs_ver} DKMS module for ${KERNEL_VERSION}."
     if ! dkms install -m zfs -v "${_zfs_ver}" -k "${KERNEL_VERSION}" --force; then
         err "OpenZFS DKMS build failed for kernel ${KERNEL_VERSION}."
-        err "This is usually an upstream OpenZFS/kernel compatibility gap - check https://github.com/openzfs/zfs/issues."
+        err "OpenZFS 2.2.10 likely does not support Linux 7.1 yet - check https://github.com/openzfs/zfs/issues."
         exit 1
     fi
 
@@ -518,6 +521,7 @@ if [ "${ZFS}" = "true" ]; then
     rm -f /etc/yum.repos.d/zfs*.repo
 
     TRANSIENT="${TRANSIENT} ${ZFS_BUILD_TOOLS}"
+fi
 fi
 
 # ---------------------------------------------------------------------------
