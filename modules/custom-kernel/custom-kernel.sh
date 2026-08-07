@@ -491,7 +491,7 @@ if [ "${ZFS}" = "true" ]; then
     if [ "${IS_FEDORA}" = "true" ]; then
         dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
     else
-        dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
+        dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-0$(rpm --eval '%{dist}').noarch.rpm"
     fi
 
     # zfs-dkms Requires: kernel-devel <= 6.17.999, but CachyOS 7.1.5 provides
