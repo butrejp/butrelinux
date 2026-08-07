@@ -491,6 +491,7 @@ if [ "${ZFS}" = "true" ]; then
     ZFS_BUILD_TOOLS="gcc make elfutils-libelf-devel"
     # shellcheck disable=SC2086
     dnf -y install dkms $ZFS_BUILD_TOOLS
+    dnf mark install dkms
 
     if [ "${IS_FEDORA}" = "true" ]; then
         dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
