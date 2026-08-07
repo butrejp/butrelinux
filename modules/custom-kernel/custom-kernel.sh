@@ -482,8 +482,6 @@ rm -f /etc/yum.repos.d/rpmfusion-free*.repo
 if [ "${ZFS}" = "true" ]; then
     log "Building OpenZFS (DKMS) for kernel: ${KERNEL_VERSION}"
 
-    # Sanity check: CachyOS devel must have installed the build tree that
-    # DKMS will actually use. The RPM dependency name is irrelevant here.
     if [ ! -e "/lib/modules/${KERNEL_VERSION}/build" ]; then
         err "Kernel build tree missing at /lib/modules/${KERNEL_VERSION}/build"
         err "Ensure ${KERNEL_DEVEL_PKG} is installed before this step."
@@ -494,52 +492,81 @@ if [ "${ZFS}" = "true" ]; then
     # shellcheck disable=SC2086
     dnf -y install dkms $ZFS_BUILD_TOOLS
 
-    # Install zfs-release so we have the signing key and repo configs on disk.
-    # We clean it up later; we won't use dnf to install ZFS itself.
     if [ "${IS_FEDORA}" = "true" ]; then
         dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
     else
         dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-0$(rpm --eval '%{dist}').noarch.rpm"
     fi
 
-    # The stable zfs repo only has 2.2.10 (max kernel 6.17). We need 2.4.2
-    # from epel-testing, which has 7.1 compat patches. Download the RPMs
-    # directly with curl because dnf dependency resolution will still reject
-    # CachyOS's kernel-devel = 7.1.5 (zfs-dkms Requires: <= 7.0.999).
-    ZFS_VER="2.4.2"
-    ZFS_REL="1.el10"
+    # -----------------------------------------------------------------
+    # Discover latest ZFS version + library names from testing repo
+    # -----------------------------------------------------------------
     ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/10.1/x86_64"
 
-    log "Downloading OpenZFS ${ZFS_VER} from testing repo..."
+    ZFS_LATEST=$(curl -fsL "${ZFS_REPO_URL}/" | \
+        grep -o 'zfs-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-[0-9][0-9]*\.el10\.x86_64\.rpm' | \
+        sort -V | tail -n1)
+
+    if [ -z "$ZFS_LATEST" ]; then
+        err "Could not discover latest ZFS version from ${ZFS_REPO_URL}"
+        exit 1
+    fi
+
+    ZFS_VER=$(echo "$ZFS_LATEST" | sed 's/^zfs-//; s/-[0-9]*\.el10\.x86_64\.rpm$//')
+    ZFS_REL=$(echo "$ZFS_LATEST" | sed 's/^zfs-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-//; s/\.el10\.x86_64\.rpm$//')
+    _zfs_ver="$ZFS_VER"
+    log "Discovered OpenZFS ${_zfs_ver}-${ZFS_REL} from testing repo."
+
+    _discover_pkg() {
+        local pattern="$1"
+        curl -fsL "${ZFS_REPO_URL}/" | \
+            grep -o "${pattern}-${ZFS_VER}-${ZFS_REL}\.el10\.x86_64\.rpm" | \
+            sed 's/-.*//' | sort -V | tail -n1
+    }
+
+    LIBNVPAIR=$(_discover_pkg 'libnvpair[0-9]*')
+    LIBUUTIL=$(_discover_pkg 'libuutil[0-9]*')
+    LIBZFS=$(_discover_pkg 'libzfs[0-9]*')
+    LIBZPOOL=$(_discover_pkg 'libzpool[0-9]*')
+
+    for lib in LIBNVPAIR LIBUUTIL LIBZFS LIBZPOOL; do
+        if [ -z "${!lib}" ]; then
+            err "Could not discover ${lib} package for ZFS ${_zfs_ver}-${ZFS_REL}"
+            exit 1
+        fi
+    done
+
+    # -----------------------------------------------------------------
+    # Download and install
+    # -----------------------------------------------------------------
+    log "Downloading OpenZFS ${_zfs_ver} packages..."
     cd /tmp
     for pkg in \
-        "libnvpair3-${ZFS_VER}-${ZFS_REL}.x86_64" \
-        "libuutil3-${ZFS_VER}-${ZFS_REL}.x86_64" \
-        "libzfs7-${ZFS_VER}-${ZFS_REL}.x86_64" \
-        "libzpool7-${ZFS_VER}-${ZFS_REL}.x86_64" \
+        "${LIBNVPAIR}-${ZFS_VER}-${ZFS_REL}.x86_64" \
+        "${LIBUUTIL}-${ZFS_VER}-${ZFS_REL}.x86_64" \
+        "${LIBZFS}-${ZFS_VER}-${ZFS_REL}.x86_64" \
+        "${LIBZPOOL}-${ZFS_VER}-${ZFS_REL}.x86_64" \
         "python3-pyzfs-${ZFS_VER}-${ZFS_REL}.noarch" \
         "zfs-dracut-${ZFS_VER}-${ZFS_REL}.noarch" \
         "zfs-${ZFS_VER}-${ZFS_REL}.x86_64" \
         "zfs-dkms-${ZFS_VER}-${ZFS_REL}.noarch"; do
         curl -fsLO "${ZFS_REPO_URL}/${pkg}.rpm" || {
-            err "Failed to download ${pkg}.rpm from ZFS testing repo."
+            err "Failed to download ${pkg}.rpm"
             exit 1
         }
     done
 
-    log "Installing OpenZFS ${ZFS_VER} RPMs (bypassing kernel-devel dep check)..."
+    log "Installing OpenZFS ${_zfs_ver} RPMs (bypassing kernel-devel dep check)..."
     rpm -Uvh ./*.rpm --nodeps
     rm -f ./*.rpm
-    cd -
+    cd - >/dev/null
 
-    _zfs_ver=$(rpm -q --queryformat '%{VERSION}\n' zfs-dkms 2>/dev/null)
-    log "Building OpenZFS ${_zfs_ver} DKMS module for ${KERNEL_VERSION}."
-
-    # 2.4.2 includes 7.1 compat patches but configure rejects 7.1 unless
-    # --enable-linux-experimental is passed. Inject it two ways to be sure.
+    # -----------------------------------------------------------------
+    # Patch DKMS build for experimental kernel support
+    # -----------------------------------------------------------------
     ZFS_SRC="/usr/src/zfs-${_zfs_ver}"
 
-    # Method 1: dkms.conf calls configure directly in PRE_BUILD on most distros.
+    # Method 1: patch dkms.conf if it invokes configure directly
     if [ -f "${ZFS_SRC}/dkms.conf" ]; then
         if grep -q 'configure' "${ZFS_SRC}/dkms.conf"; then
             sed -i 's|\./configure|./configure --enable-linux-experimental|' "${ZFS_SRC}/dkms.conf"
@@ -548,16 +575,16 @@ if [ "${ZFS}" = "true" ]; then
         fi
     fi
 
-    # Method 2: if configure is invoked from a Makefile instead, patch the
-    # generated configure script to default the flag to "yes".
+    # Method 2: patch configure script directly as fallback
     if [ -f "${ZFS_SRC}/configure" ]; then
         sed -i 's/enable_linux_experimental=no/enable_linux_experimental=yes/' "${ZFS_SRC}/configure"
         log "Patched configure script to default --enable-linux-experimental=yes"
     fi
 
+    log "Building OpenZFS ${_zfs_ver} DKMS module for ${KERNEL_VERSION}."
     if ! dkms install -m zfs -v "${_zfs_ver}" -k "${KERNEL_VERSION}" --force; then
         err "OpenZFS DKMS build failed for kernel ${KERNEL_VERSION}."
-        err "OpenZFS 2.4.2 + linux 7.1 may still have an upstream compat gap."
+        err "OpenZFS ${_zfs_ver} + linux ${KERNEL_VERSION} may have an upstream compat gap."
         err "Check https://github.com/openzfs/zfs/issues for updates."
         exit 1
     fi
