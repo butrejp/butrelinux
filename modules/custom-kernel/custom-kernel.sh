@@ -456,8 +456,6 @@ log "Cleaning RPM Fusion Free repo."
 dnf -y remove rpmfusion-free-release
 rm -f /etc/yum.repos.d/rpmfusion-free*.repo
 
-# restore_akmodsbuild
-
 # ---------------------------------------------------------------------------
 # Build OpenZFS (DKMS)
 # ---------------------------------------------------------------------------
