@@ -6,7 +6,18 @@ image-version: stable
 
 modules:
   - from-file: common.yml
-  
+  - type: dnf
+    remove:
+      packages:
+        - zfs
+        - libnvpair3
+        - libzfs7
+        - kmod-zfs
+        - python3-pyzfs
+        - kernel-headers
+        - kernel-tools
+        - kernel-tools-libs
+        
   - type: script
     scripts:
       - image-info-hwe.sh
