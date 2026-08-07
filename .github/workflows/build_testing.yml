@@ -1,24 +1,5 @@
 name: bluebuild_testing
 on:
-  schedule:
-    - cron:
-        "00 06 * * *"
-  push:
-    paths-ignore:
-      - "**.md"
-      - ".github/workflows/build_iso_unified.yml"
-      - ".github/workflows/build.yml"
-      - ".github/heartbeat.txt"
-      - "**.cfg"
-      - "recipes/hwe.yml"
-      - "recipes/nvidia.yml"
-      - "recipes/lts.yml"
-      - "recipes/recipe.yml"
-
-  pull_request:
-    paths-ignore:
-      - "**.md"
-      - ".github/workflows/build_iso_unified.yml"
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time

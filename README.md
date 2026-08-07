@@ -34,32 +34,19 @@ if you use the rebase instructions you must rebase from a centos stream derived 
 > [This is an experimental feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable), try at your own discretion.
 
 to rebase an existing EL10 based installation to the latest build:
-#### amd/intel
+#### 
 ```bash
 # optionally clean up default flatpaks
 flatpak uninstall --all
 # rebase to the unsigned image, to get the proper signing keys and policies installed:
-rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux-hwe:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/butrejp/butrelinux-< VARIANT >:latest
 ```
 after the system reboots:
 ```bash
 # since skel can't touch existing users, optionally copy the default configs to your user profile
 # or just make your own config.  I'm not your mom.
 mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
-# rebase to the signed image to complete the installation
-rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux-hwe:latest
 ```
-#### nvidia
-```bash
-flatpak uninstall --all
-rpm-ostree rebase --reboot ostree-unverified-registry:ghcr.io/butrejp/butrelinux-nvidia:latest
-```
-after the system reboots:
-```bash
-mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
-rpm-ostree rebase --reboot ostree-image-signed:docker://ghcr.io/butrejp/butrelinux-nvidia:latest
-```
-alternatively, there's butrelinux-lts or just butrelinux (legacy GDX image).  if you're not sure whether you should install these two, you probably shouldn't.  
 
 ### verification
 
@@ -110,3 +97,18 @@ unified iso was easier than I thought.  they've been available since yesterday. 
 20260802  
 this isn't really for users (though it might be worth checking out in a VM), but you can start to see some ideas of where I'm taking this.  for example, I just crammed the cachyos lto kernel onto an el10 userspace.  I've also started building a module to inject fedora packages in a more sane way than I had previously done (and abandoned for good reason).  
 if a shakedown run clears then these things will make it into the standard images.  the ultimate goal is to hopefully make multilib happen on el10 and ship a gaming variant that doesn't rely on giving podman your gpu.  we'll see how that goes though, don't expect a miracle.    
+
+### consolidation
+20260807  
+
+since bluefin is putting lts on the hwe path anyway I've elected to just ditch the lts image.  the legacy image is finally fully deprecated too.  
+both are still in the registry for now, but will not continue to build.  
+```
+# for LTS users
+bootc switch --enforce-container-sigpolicy ghcr.io/butrejp/butrelinux-hwe:latest
+
+# for legacy users on the old butrelinux image, I suggest a reinstall, but if you must switch
+bootc switch ghcr.io/butrejp/butrelinux-nvidia:latest
+```
+
+additionally, I've promoted experimental to main so we've all got lto kernels, and everything has inhereted kde 6.7 by now.  your welcome   

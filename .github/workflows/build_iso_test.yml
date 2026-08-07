@@ -1,0 +1,51 @@
+name: Build butrelinux Unified ISO
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman xorriso
+
+      - name: Generate Base Installer ISO
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/results
+          curl -L -o cs10-boot.iso "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+
+          sudo podman run --rm --privileged -v /dev:/dev -v $GITHUB_WORKSPACE:/work:z \
+            quay.io/centos/centos:stream10 \
+            /bin/bash -c "dnf install -y lorax && mkksiso /work/kickstarts/hwe.cfg /work/cs10-boot.iso /work/results/base.iso"
+
+      - name: Inject Configurations
+        run: |
+          xorriso -indev results/base.iso \
+            -outdev results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
+            -volid "BUTRELINUX" \
+            -boot_image any replay \
+            -map kickstarts/hwe.cfg /hwe.cfg \
+            -map kickstarts/nvidia.cfg /nvidia.cfg \
+            -update boot/grub.cfg /EFI/BOOT/grub.cfg \
+            -update boot/grub.cfg /EFI/BOOT/grub2.cfg \
+            -update boot/grub.cfg /boot/grub2/grub.cfg
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v7
+        with:
+          name: butrelinux-unified-${{ env.BUILD_DATE }}
+          path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
+          retention-days: 14
+          if-no-files-found: error
