@@ -488,7 +488,7 @@ if [ "${ZFS}" = "true" ]; then
     # shellcheck disable=SC2086
     dnf -y install dkms $ZFS_BUILD_TOOLS
 
-        dnf -y install "http://download.zfsonlinux.org/fedora/44/zfs-release-3-1.fc44.src.rpm"
+        dnf -y install "http://download.zfsonlinux.org/fedora/44/zfs-release-3-1.fc44.noarch.rpm"
 
 
     # Do NOT switch the repo to zfs-kmod/*-kmod - those precompiled kABI
