@@ -124,7 +124,7 @@ fi
 #   elrepo - ELRepo's kernel-ml/kernel-lt (EL only)
 
 # TRANSIENT: space-separated build-only packages removed from the image after signing.
-TRANSIENT="akmods"
+TRANSIENT=""
 
 case "${KERNEL_TYPE}" in
 cachyos-lto)
@@ -621,11 +621,11 @@ if [ "${NVIDIA}" = "true" ]; then
     log "Starting upstream NVIDIA payload build for kernel ${KERNEL_VERSION}."
 
     # 1. Added explicit Mesa drivers to ensure software fallback works in VMs
-    NVIDIA_BUILD_TOOLS="dkms gcc make perl elfutils-libelf-devel checkpolicy selinux-policy-devel clang llvm lld"
+    NVIDIA_BUILD_TOOLS="gcc make perl elfutils-libelf-devel checkpolicy selinux-policy-devel clang llvm lld"
     NVIDIA_RUNTIME_DEPS="libglvnd libglvnd-egl libglvnd-gles libglvnd-glx libglvnd-opengl egl-x11 egl-wayland2 egl-gbm xorg-x11-server-Xwayland mesa-dri-drivers mesa-vulkan-drivers mesa-libEGL mesa-libGL"
 
     # shellcheck disable=SC2086
-    dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts --setopt=skip_unavailable=1 $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS curl tar bzip2 policycoreutils
+    dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts --setopt=skip_unavailable=1 $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS dkms curl tar bzip2 policycoreutils
 
     if [[ ! -d "$KERNEL_SOURCE" ]]; then
         err "Missing kernel source path after installing devel package: $KERNEL_SOURCE"
@@ -785,6 +785,10 @@ fi
 # Remove transient build packages
 # ---------------------------------------------------------------------------
 
+if [ "${ZFS}" = "true" ] && [ -n "${_zfs_ver}" ]; then
+    rm -rf "/usr/src/zfs-${_zfs_ver}"
+fi
+
 log "Removing transient build packages: ${TRANSIENT}"
 # shellcheck disable=SC2086
 dnf -y remove $TRANSIENT || true
@@ -844,6 +848,16 @@ if [ "${NVIDIA}" = "true" ]; then
         fi
     done
     log "All Nvidia modules present."
+fi
+
+if [ "${ZFS}" = "true" ]; then
+    for _name in zfs spl zcommon znvpair zunicode zavl icp; do
+        if ! find "/usr/lib/modules/${KERNEL_VERSION}" -name "${_name}.ko*" | grep -q .; then
+            err "Missing ZFS module: ${_name}.ko*"
+            exit 1
+        fi
+    done
+    log "All ZFS modules present."
 fi
 
 log "Custom kernel installation complete."
