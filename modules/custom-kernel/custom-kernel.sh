@@ -512,8 +512,10 @@ if [ "${ZFS}" = "true" ]; then
         exit 1
     fi
 
-    ZFS_VER=$(echo "$ZFS_LATEST" | sed 's/^zfs-//; s/-[0-9]*\.el10\.x86_64\.rpm$//')
-    ZFS_REL=$(echo "$ZFS_LATEST" | sed 's/^zfs-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-//; s/\.el10\.x86_64\.rpm$//')
+    # Extract version-release string 
+    ZFS_VER_REL=$(echo "$ZFS_LATEST" | sed 's/^zfs-//; s/\.x86_64\.rpm$//')
+    ZFS_VER=$(echo "$ZFS_VER_REL" | sed 's/-[0-9].*//')
+    ZFS_REL=$(echo "$ZFS_VER_REL" | sed 's/^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-//')
     _zfs_ver="$ZFS_VER"
     log "Discovered OpenZFS ${_zfs_ver}-${ZFS_REL} from testing repo."
 
