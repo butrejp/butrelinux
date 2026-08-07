@@ -488,11 +488,8 @@ if [ "${ZFS}" = "true" ]; then
     # shellcheck disable=SC2086
     dnf -y install dkms $ZFS_BUILD_TOOLS
 
-    if [ "${IS_FEDORA}" = "true" ]; then
-        dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
-    else
-        dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-0$(rpm --eval '%{dist}').noarch.rpm"
-    fi
+        dnf -y install "http://download.zfsonlinux.org/fedora/44/zfs-release-3-1.fc44.src.rpm"
+
 
     # Do NOT switch the repo to zfs-kmod/*-kmod - those precompiled kABI
     # kmods only target the distro's own stock kernel, never our custom one.
