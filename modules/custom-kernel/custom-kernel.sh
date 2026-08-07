@@ -522,7 +522,7 @@ if [ "${ZFS}" = "true" ]; then
     _discover_pkg() {
         local pattern="$1"
         curl -fsL "${ZFS_REPO_URL}/" | \
-            grep -o "${pattern}-${ZFS_VER}-${ZFS_REL}\.el10\.x86_64\.rpm" | \
+            grep -o "${pattern}-${ZFS_VER}-${ZFS_REL}\.x86_64\.rpm" | \
             sed 's/-.*//' | sort -V | tail -n1
     }
 
