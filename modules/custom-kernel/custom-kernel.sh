@@ -783,22 +783,11 @@ if [ "${SECURE_BOOT}" = "true" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Remove transient build packages
+# Cleanup
 # ---------------------------------------------------------------------------
 
 if [ "${ZFS}" = "true" ] && [ -n "${_zfs_ver}" ]; then
     rm -rf "/usr/src/zfs-${_zfs_ver}"
-fi
-
-log "Removing transient build packages: ${TRANSIENT}"
-# shellcheck disable=SC2086
-dnf -y remove $TRANSIENT || true
-
-_residual=$(rpm -qa --queryformat '%{NAME}\n' | grep -E '^akmod-|(-devel-matched)$' || true)
-if [ -n "${_residual}" ]; then
-    log "Removing residual build packages: ${_residual}"
-    # shellcheck disable=SC2086
-    dnf -y remove $_residual || true
 fi
 
 log "Removing kernel build trees."
