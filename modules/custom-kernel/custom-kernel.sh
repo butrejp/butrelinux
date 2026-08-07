@@ -851,7 +851,7 @@ if [ "${NVIDIA}" = "true" ]; then
 fi
 
 if [ "${ZFS}" = "true" ]; then
-    for _name in zfs spl zcommon znvpair zunicode zavl icp; do
+    for _name in spl zfs; do
         if ! find "/usr/lib/modules/${KERNEL_VERSION}" -name "${_name}.ko*" | grep -q .; then
             err "Missing ZFS module: ${_name}.ko*"
             exit 1
