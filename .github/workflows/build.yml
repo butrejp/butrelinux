@@ -1,20 +1,8 @@
-name: bluebuild
+name: build butrelinux mainline images
 on:
   schedule:
     - cron:
-        "00 06 * * 0"
-  push:
-    paths-ignore:
-      - "**.md"
-      - ".github/workflows/build_iso_unified.yml"
-      - ".github/workflows/build_testing.yml"
-      - ".github/heartbeat.txt"
-      - "**.cfg"
-      - "recipes/experimental.yml"
-  pull_request:
-    paths-ignore:
-      - "**.md"
-      - ".github/workflows/build_iso_unified.yml"
+        "0 0 * * 0"
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time

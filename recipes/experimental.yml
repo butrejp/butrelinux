@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: butrelinux-experimental
+description: Bluefin LTS Experimental with KDE Plasma (Intel/AMD)
+base-image: ghcr.io/projectbluefin/bluefin-lts-hwe
+image-version: stable
+
+modules:
+  - from-file: common.yml
+  
+  - type: butre-image-info
+    source: local
+    variant: experimental
+
+  - type: custom-kernel
+    source: local
+    kernel: cachyos-lto
+    initramfs: true
+    zfs: true
+    nvidia: false
+
+  - from-file: end.yml

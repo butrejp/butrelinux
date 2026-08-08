@@ -1,5 +1,9 @@
-name: bluebuild_testing
+name: build butrelinux experimental images
 on:
+  schedule:
+    - cron:
+        "0 0 * * 1,3,5"
+
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time
@@ -18,7 +22,7 @@ jobs:
       matrix:
         recipe:
           - experimental.yml
-          - experimental-nvidia.yml
+
 
     steps:
       # the build is fully handled by the reusable github action
@@ -32,3 +36,5 @@ jobs:
 
           # enabled by default, disable if your image is small and you want faster builds
           maximize_build_space: true
+          chunkah: true
+          verify-install: true
