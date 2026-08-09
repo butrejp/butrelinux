@@ -21,6 +21,6 @@ modules:
     kernel: cachyos-lto
     initramfs: true
     zfs: true
-    nvidia: false
+    nvidia: true
 
   - from-file: end.yml
