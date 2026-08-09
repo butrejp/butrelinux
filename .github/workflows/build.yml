@@ -23,6 +23,8 @@ jobs:
           # !! Add your recipes here
           - hwe.yml
           - nvidia.yml
+          - lto-hwe.yml
+          - lto-nvidia.yml
           
     steps:
       # the build is fully handled by the reusable github action
