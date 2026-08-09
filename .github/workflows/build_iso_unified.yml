@@ -1,4 +1,4 @@
-name: Build butrelinux Unified ISO
+name: Build Butrelinux ISO
 
 permissions:
   contents: write
@@ -6,14 +6,18 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-    - cron: "00 06 1 * *"
+    - cron: '0 0 1 * *'
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+
+    env:
+      IMAGES: "hwe nvidia lto-hwe lto-nvidia"
+
     steps:
       - name: Set build date
-        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+        run: echo "BUILD_DATE=$(date +%Y%m%d)" >> "$GITHUB_ENV"
 
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -23,26 +27,93 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y podman xorriso
 
+      - name: Generate installer configurations
+        run: |
+          set -eu
+
+          mkdir -p generated-kickstarts
+
+          menu_entries=""
+
+          for image in $IMAGES; do
+            echo "Generating kickstart for ${image}..."
+
+            sed "s|@IMAGE@|${image}|g" \
+              kickstarts/base.cfg \
+              > "generated-kickstarts/${image}.cfg"
+
+            menu_entries="${menu_entries}
+          menuentry 'Install butrelinux-${image}' --class fedora --class gnu-linux --class gnu --class os {
+              linux (\$root)\$kernel_path \$common_args inst.ks=hd:LABEL=BUTRELINUX:/${image}.cfg
+              initrd (\$root)\$initrd_path
+          }"
+          done
+
+          printf '%s\n' "$menu_entries" > generated-menu-entries.cfg
+
+          awk '
+            /@MENU_ENTRIES@/ {
+              while ((getline line < "generated-menu-entries.cfg") > 0)
+                print line
+              close("generated-menu-entries.cfg")
+              next
+            }
+            { print }
+          ' boot/grub.cfg > generated-grub.cfg
+
+          echo "Generated GRUB configuration:"
+          cat generated-grub.cfg
+
       - name: Generate Base Installer ISO
         run: |
-          mkdir -p $GITHUB_WORKSPACE/results
-          curl -L -o cs10-boot.iso "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+          set -eu
 
-          sudo podman run --rm --privileged -v /dev:/dev -v $GITHUB_WORKSPACE:/work:z \
+          mkdir -p "$GITHUB_WORKSPACE/results"
+
+          curl -L -o cs10-boot.iso \
+            "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+
+          sudo podman run --rm --privileged \
+            -v /dev:/dev \
+            -v "$GITHUB_WORKSPACE:/work:z" \
             quay.io/centos/centos:stream10 \
-            /bin/bash -c "dnf install -y lorax && mkksiso /work/kickstarts/hwe.cfg /work/cs10-boot.iso /work/results/base.iso"
+            /bin/bash -c \
+              "dnf install -y lorax && \
+               mkksiso \
+                 /work/generated-kickstarts/hwe.cfg \
+                 /work/cs10-boot.iso \
+                 /work/results/base.iso"
 
       - name: Inject Configurations
         run: |
-          xorriso -indev results/base.iso \
-            -outdev results/butrelinux-unified-${{ env.BUILD_DATE }}.iso \
-            -volid "BUTRELINUX" \
-            -boot_image any replay \
-            -map kickstarts/hwe.cfg /hwe.cfg \
-            -map kickstarts/nvidia.cfg /nvidia.cfg \
-            -update boot/grub.cfg /EFI/BOOT/grub.cfg \
-            -update boot/grub.cfg /EFI/BOOT/grub2.cfg \
-            -update boot/grub.cfg /boot/grub2/grub.cfg
+          set -eu
+
+          XISO=(
+            xorriso
+            -indev results/base.iso
+            -outdev "results/butrelinux-unified-${BUILD_DATE}.iso"
+            -volid "BUTRELINUX"
+            -boot_image any replay
+          )
+
+          for image in $IMAGES; do
+            echo "Injecting ${image}.cfg..."
+
+            XISO+=(
+              -map
+              "generated-kickstarts/${image}.cfg"
+              "/${image}.cfg"
+            )
+          done
+
+          XISO+=(
+            -update generated-grub.cfg /EFI/BOOT/grub.cfg
+            -update generated-grub.cfg /EFI/BOOT/grub2.cfg
+            -update generated-grub.cfg /boot/grub2/grub.cfg
+          )
+
+          echo "Running xorriso..."
+          "${XISO[@]}"
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
