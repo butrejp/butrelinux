@@ -9,6 +9,5 @@ implement remove in fedora-rpm
 investigate akmods patch  
 
 ### little:  
-bad metadata in lto builds.  non-blocking  
 hibernate handling.  
 more complete secure boot.  depends on hibernate  

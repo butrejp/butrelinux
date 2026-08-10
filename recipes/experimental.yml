@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: butrelinux-experimental
-description: Bluefin LTS Experimental with KDE Plasma (Intel/AMD)
+description: Butrelinux Experimental
 base-image: ghcr.io/projectbluefin/bluefin-lts-hwe
 image-version: stable
 

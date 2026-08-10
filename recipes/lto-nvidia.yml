@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: butrelinux-lto-nvidia
-description: Bluefin LTS HWE with KDE Plasma (Nvidia)
+description: Butre (Nvidia)
 base-image: ghcr.io/projectbluefin/bluefin-lts-hwe
 image-version: stable
 
