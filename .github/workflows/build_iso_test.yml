@@ -5,8 +5,6 @@ permissions:
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 1 * *'
 
 jobs:
   build-iso:
@@ -84,34 +82,6 @@ jobs:
                  /work/cs10-boot.iso \
                  /work/results/base.iso"
 
-      - name: Inspect BIOS GRUB image
-        run: |
-          set -eux
-
-          mkdir -p eltorito
-
-          xorriso \
-            -indev results/base.iso \
-            -osirrox on \
-            -extract /images/eltorito.img eltorito/eltorito.img
-
-          sudo podman run --rm \
-            -v "$GITHUB_WORKSPACE:/work:z" \
-            quay.io/centos/centos:stream10 \
-          /bin/bash -c '
-            dnf install -y grub2-tools grub2-tools-extra
-            grub2-file /work/eltorito/eltorito.img || true
-            grub2-mkimage --version
-          '
-
-      - name: Inspect boot structure
-        run: |
-          xorriso -indev results/base.iso \
-            -report_el_torito as_mkisofs
-
-          xorriso -indev results/base.iso \
-            -report_system_area plain
-
       - name: Inject Configurations
         run: |
           set -eu
@@ -121,6 +91,7 @@ jobs:
             -indev results/base.iso
             -outdev "results/butrelinux-unified-${BUILD_DATE}.iso"
             -volid "BUTRELINUX"
+            -boot_image any replay
           )
 
           for image in $IMAGES; do
@@ -137,7 +108,6 @@ jobs:
             -update generated-grub.cfg /EFI/BOOT/grub.cfg
             -update generated-grub.cfg /EFI/BOOT/grub2.cfg
             -update generated-grub.cfg /boot/grub2/grub.cfg
-            -boot_image grub patch
           )
 
           echo "Running xorriso..."
@@ -150,4 +120,3 @@ jobs:
           path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
           retention-days: 14
           if-no-files-found: error
-
