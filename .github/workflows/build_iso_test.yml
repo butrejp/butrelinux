@@ -28,16 +28,12 @@ jobs:
       - name: Generate installer configurations
         run: |
           set -eu
-
           mkdir -p generated-kickstarts
 
           menu_entries=""
-
           for image in $IMAGES; do
             echo "Generating kickstart for ${image}..."
-
-            sed "s|@IMAGE@|${image}|g" \
-              kickstarts/base.cfg \
+            sed "s|@IMAGE@|${image}|g" kickstarts/base.cfg \
               > "generated-kickstarts/${image}.cfg"
 
             menu_entries="${menu_entries}
@@ -62,16 +58,17 @@ jobs:
           echo "Generated GRUB configuration:"
           cat generated-grub.cfg
 
+      - name: Download base ISO
+        run: |
+          mkdir -p results
+          curl -fL -o cs10-boot.iso \
+            "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+
       - name: Generate Base Installer ISO
         run: |
           set -eu
-
-          mkdir -p "$GITHUB_WORKSPACE/results"
-
-          curl -L -o cs10-boot.iso \
-            "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
-
           sudo podman run --rm --privileged \
+            --user "$(id -u):$(id -g)" \
             -v /dev:/dev \
             -v "$GITHUB_WORKSPACE:/work:z" \
             quay.io/centos/centos:stream10 \
@@ -81,6 +78,20 @@ jobs:
                  /work/generated-kickstarts/hwe.cfg \
                  /work/cs10-boot.iso \
                  /work/results/base.iso"
+
+      - name: Fix embedded EFI boot image for DD mode
+        run: |
+          set -eu
+          sudo apt-get install -y mtools
+
+          xorriso -indev results/base.iso \
+            -osirrox on \
+            -extract /images/efiboot.img /tmp/efiboot.img
+
+          export MTOOLS_SKIP_CHECK=1
+
+          mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
+          mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
 
       - name: Inject Configurations
         run: |
@@ -96,7 +107,6 @@ jobs:
 
           for image in $IMAGES; do
             echo "Injecting ${image}.cfg..."
-
             XISO+=(
               -map
               "generated-kickstarts/${image}.cfg"
@@ -105,18 +115,24 @@ jobs:
           done
 
           XISO+=(
+            -update /tmp/efiboot.img /images/efiboot.img
             -update generated-grub.cfg /EFI/BOOT/grub.cfg
-            -update generated-grub.cfg /EFI/BOOT/grub2.cfg
+            -map generated-grub.cfg /EFI/BOOT/grub2.cfg
             -update generated-grub.cfg /boot/grub2/grub.cfg
           )
 
           echo "Running xorriso..."
           "${XISO[@]}"
 
+      - name: Cleanup intermediate files
+        if: always()
+        run: rm -f cs10-boot.iso results/base.iso
+
       - name: Upload ISO
         uses: actions/upload-artifact@v7
         with:
           name: butrelinux-unified-${{ env.BUILD_DATE }}
           path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
+          archive: false
           retention-days: 14
           if-no-files-found: error
