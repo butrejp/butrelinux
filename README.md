@@ -112,3 +112,8 @@ bootc switch ghcr.io/butrejp/butrelinux-nvidia:latest
 ```
 
 additionally, I've promoted experimental to main so we've all got lto kernels, and everything has inhereted kde 6.7 by now.  your welcome   
+
+#### chunkah
+20260811  
+
+I've enabled chunkah on these builds in mainline, so your next bootc upgrade is gonna be huge.  mine was over 6 gigabytes.  future bootc upgrades however should be much smaller.  some of the upstream bluefin chunks are like 3 gigabytes and I'm hoping chunkah can shrink them down a bit  
