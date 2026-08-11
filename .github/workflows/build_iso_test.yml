@@ -68,7 +68,6 @@ jobs:
         run: |
           set -eu
           sudo podman run --rm --privileged \
-            --user "$(id -u):$(id -g)" \
             -v /dev:/dev \
             -v "$GITHUB_WORKSPACE:/work:z" \
             quay.io/centos/centos:stream10 \
@@ -78,6 +77,9 @@ jobs:
                  /work/generated-kickstarts/hwe.cfg \
                  /work/cs10-boot.iso \
                  /work/results/base.iso"
+          
+          # Fix ownership so the next (non-sudo) step can read the ISO
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/results"
 
       - name: Fix embedded EFI boot image for DD mode
         run: |
