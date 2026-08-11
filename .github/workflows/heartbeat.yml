@@ -33,4 +33,3 @@ jobs:
             git commit -m "chore: repository heartbeat"
             git push
           fi
-          

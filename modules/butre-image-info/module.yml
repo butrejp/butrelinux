@@ -3,3 +3,4 @@ shortdesc: The butre-image-info module writes custom image metadata to image-inf
 example: |
   type: butre-image-info
   variant: lts
+  
