@@ -8,6 +8,7 @@ modules:
   - from-file: common.yml
   - type: dnf
     install:
+      install-weak-deps: false
       packages:
         - plasma-discover
         - plasma-discover-flatpak
