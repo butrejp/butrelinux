@@ -106,9 +106,9 @@ jobs:
             -indev results/base.iso
             -outdev "results/butrelinux-unified-${BUILD_DATE}.iso"
             -volid "BUTRELINUX"
-            # Replay existing boot setup from base ISO, then override EFI image
             -boot_image any replay
-            -boot_image any efi_path=/tmp/efiboot.img
+            -map /tmp/efiboot.img /images/efiboot.img
+            -boot_image any efi_path=/images/efiboot.img
           )
 
           for image in $IMAGES; do
