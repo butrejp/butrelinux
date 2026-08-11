@@ -81,7 +81,6 @@ modules:
         - plasma-systemmonitor
         - kde-gtk-config
         - kcalc
-        - fastfetch
         - micro
         - btop
         - htop
@@ -93,6 +92,15 @@ modules:
         - tuned-profiles-atomic
         - lm_sensors
         
+  - type: dnf
+    install:
+      install-weak-deps: false
+      packages:
+        - plasma-discover
+        - plasma-discover-flatpak
+        - plasma-discover-libs
+        - plasma-discover-kns
+
   - type: kargs
     kargs:
       - amdgpu.ppfeaturemask=0xffffffff
@@ -110,17 +118,7 @@ modules:
       masked:
         - rechunker-group-fix.service
         - systemd-oomd.service
-
-  - type: default-flatpaks
-    configurations:
-      - notify: true
-        scope: system
-        repo:
-          url: https://flathub.org/beta-repo/flathub-beta.flatpakrepo
-          name: flathub-beta
-          title: Flathub Beta
-        install:
-          - org.kde.discover
+        - system-flatpak-setup.timer
 
   - type: fedora-rpm
     source: local
