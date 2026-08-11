@@ -23,7 +23,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman xorriso
+          sudo apt-get install -y podman xorriso mtools
 
       - name: Generate installer configurations
         run: |
@@ -78,34 +78,24 @@ jobs:
                  /work/cs10-boot.iso \
                  /work/results/base.iso"
           
-          # Fix ownership so the next (non-sudo) step can read the ISO
           sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/results"
 
       - name: Fix embedded EFI boot image for DD mode
         run: |
           set -eu
-          sudo apt-get install -y mtools
 
-          # Get the hidden EFI image location from xorriso
+          # Extract the hidden EFI image from the ISO
           efi_info=$(xorriso -indev results/base.iso -toc 2>&1 | grep "EFI image start and size")
           echo "$efi_info"
-
-          # Parse: "449763 * 2048 , 17600 * 512"
           start_block=$(echo "$efi_info" | grep -oP '\d+(?= \* 2048)')
           size_blocks=$(echo "$efi_info" | grep -oP '\d+(?= \* 512)')
-
-          # Extract it (start is in 2048-byte blocks; dd uses 512-byte blocks, so multiply by 4)
           dd if=results/base.iso of=/tmp/efiboot.img \
             bs=512 skip=$((start_block * 4)) count=$size_blocks
 
-          # Patch the GRUB config inside the FAT image
+          # Modify the GRUB config inside the FAT image
           export MTOOLS_SKIP_CHECK=1
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
-
-          # Write it back in-place so the next xorriso step picks it up
-          dd if=/tmp/efiboot.img of=results/base.iso \
-            bs=512 seek=$((start_block * 4)) conv=notrunc
 
       - name: Inject Configurations
         run: |
@@ -116,7 +106,9 @@ jobs:
             -indev results/base.iso
             -outdev "results/butrelinux-unified-${BUILD_DATE}.iso"
             -volid "BUTRELINUX"
+            # Replay existing boot setup from base ISO, then override EFI image
             -boot_image any replay
+            -boot_image any efi_path=/tmp/efiboot.img
           )
 
           for image in $IMAGES; do
@@ -137,9 +129,26 @@ jobs:
           echo "Running xorriso..."
           "${XISO[@]}"
 
+      - name: Verify ISO
+        run: |
+          set -eu
+          iso="results/butrelinux-unified-${BUILD_DATE}.iso"
+          
+          echo "=== ISO file ==="
+          ls -lh "$iso"
+          
+          echo -e "\n=== El Torito boot images ==="
+          xorriso -indev "$iso" -report_el_torito plain 2>&1 || true
+          
+          echo -e "\n=== Partition table ==="
+          fdisk -l "$iso" 2>&1 || true
+          
+          echo -e "\n=== EFI image location ==="
+          xorriso -indev "$iso" -toc 2>&1 | grep -i "EFI image" || true
+
       - name: Cleanup intermediate files
         if: always()
-        run: rm -f cs10-boot.iso results/base.iso
+        run: rm -f cs10-boot.iso results/base.iso /tmp/efiboot.img
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
