@@ -13,6 +13,7 @@ modules:
         - plasma-discover
         - plasma-discover-flatpak
         - plasma-discover-libs
+        - plasma-discover-kns
   
   - type: butre-image-info
     source: local
