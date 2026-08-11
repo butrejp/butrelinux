@@ -32,9 +32,4 @@ model FedoraRpmModuleV1 {
    * RPM packages to install.
    */
   install?: Array<string>;
-
-  /**
-   * RPM packages to remove.
-   */
-  remove?: Array<string>;
 }

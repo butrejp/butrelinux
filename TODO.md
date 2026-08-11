@@ -3,9 +3,7 @@ there's some bashisms in the current version of custom-kernel that I need to cle
 zfs is currently fetched over http due to some upstream funk.  investigate and fix.  
 
 ### medium: 
-test native plasma-discover integration in experimental  
 find alternatives to gnome50-el10-compat for tuned.ppd fix  
-implement remove in fedora-rpm  
 investigate akmods patch  
 
 ### little:  

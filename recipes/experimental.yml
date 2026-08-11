@@ -6,17 +6,10 @@ image-version: stable
 
 modules:
   - from-file: common.yml
-  - type: dnf
-    install:
-      install-weak-deps: false
-      packages:
-        - plasma-discover
-        - plasma-discover-flatpak
-        - plasma-discover-libs
-        - plasma-discover-kns
   
   - type: butre-image-info
     source: local
     variant: experimental
 
   - from-file: end.yml
+  

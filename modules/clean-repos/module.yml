@@ -2,3 +2,4 @@ name: clean-repos
 description: Automatically disables any EL10 repositories not explicitly allowlisted.
 example: |
   type: clean-repos
+  
