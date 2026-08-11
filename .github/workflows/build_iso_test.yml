@@ -86,14 +86,26 @@ jobs:
           set -eu
           sudo apt-get install -y mtools
 
-          xorriso -indev results/base.iso \
-            -osirrox on \
-            -extract /images/efiboot.img /tmp/efiboot.img
+          # Get the hidden EFI image location from xorriso
+          efi_info=$(xorriso -indev results/base.iso -toc 2>&1 | grep "EFI image start and size")
+          echo "$efi_info"
 
+          # Parse: "449763 * 2048 , 17600 * 512"
+          start_block=$(echo "$efi_info" | grep -oP '\d+(?= \* 2048)')
+          size_blocks=$(echo "$efi_info" | grep -oP '\d+(?= \* 512)')
+
+          # Extract it (start is in 2048-byte blocks; dd uses 512-byte blocks, so multiply by 4)
+          dd if=results/base.iso of=/tmp/efiboot.img \
+            bs=512 skip=$((start_block * 4)) count=$size_blocks
+
+          # Patch the GRUB config inside the FAT image
           export MTOOLS_SKIP_CHECK=1
-
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
+
+          # Write it back in-place so the next xorriso step picks it up
+          dd if=/tmp/efiboot.img of=results/base.iso \
+            bs=512 seek=$((start_block * 4)) conv=notrunc
 
       - name: Inject Configurations
         run: |
@@ -117,7 +129,6 @@ jobs:
           done
 
           XISO+=(
-            -update /tmp/efiboot.img /images/efiboot.img
             -update generated-grub.cfg /EFI/BOOT/grub.cfg
             -map generated-grub.cfg /EFI/BOOT/grub2.cfg
             -update generated-grub.cfg /boot/grub2/grub.cfg
