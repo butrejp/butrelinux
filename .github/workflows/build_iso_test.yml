@@ -1,11 +1,12 @@
-name: Build Butrelinux ISO test
+name: Build Butrelinux ISO
 
 permissions:
   contents: write
 
 on:
   workflow_dispatch:
-
+  schedule:
+    - cron: '0 0 1 * *'
 
 jobs:
   build-iso:
@@ -63,49 +64,56 @@ jobs:
           echo "Generated GRUB configuration:"
           cat generated-grub.cfg
 
-      - name: Generate Unified Installer ISO
+      - name: Generate Base Installer ISO
         run: |
           set -eu
 
           mkdir -p "$GITHUB_WORKSPACE/results"
 
-          # 1. Fetch the official CentOS Stream 10 minimal network boot installer
           curl -L -o cs10-boot.iso \
             "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
-
 
           sudo podman run --rm --privileged \
             -v /dev:/dev \
             -v "$GITHUB_WORKSPACE:/work:z" \
             quay.io/centos/centos:stream10 \
-            /bin/bash -c "
-              dnf install -y lorax && \
-              
-              
-              mkdir -p /tmp/iso_mount /tmp/iso_work
-              mount -o loop /work/cs10-boot.iso /tmp/iso_mount
-              cp -a /tmp/iso_mount/. /tmp/iso_work/
-              umount /tmp/iso_mount
-              
+            /bin/bash -c \
+              "dnf install -y lorax && \
+               mkksiso \
+                 /work/generated-kickstarts/hwe.cfg \
+                 /work/cs10-boot.iso \
+                 /work/results/base.iso"
 
-              for image in ${IMAGES}; do
-                echo 'Embedding kickstart for '\${image}' into the layout root...'
-                cp /work/generated-kickstarts/\${image}.cfg /tmp/iso_work/\${image}.cfg
-              done
-              
-              echo 'Applying your GRUB layout changes...'
-              cp /work/generated-grub.cfg /tmp/iso_work/EFI/BOOT/grub.cfg
-              cp /work/generated-grub.cfg /tmp/iso_work/EFI/BOOT/grub2.cfg
-              
-              # Re-compile the hybrid ISO out to your output directory
-              echo 'Generating DD safe ISO image structure...'
-              mkksiso \
-                -V 'BUTRELINUX' \
-                /work/generated-kickstarts/hwe.cfg \
-                /tmp/iso_work \
-                /work/results/butrelinux-unified-${BUILD_DATE}.iso
-            "
+      - name: Inject Configurations
+        run: |
+          set -eu
 
+          XISO=(
+            xorriso
+            -indev results/base.iso
+            -outdev "results/butrelinux-unified-${BUILD_DATE}.iso"
+            -volid "BUTRELINUX"
+          )
+
+          for image in $IMAGES; do
+            echo "Injecting ${image}.cfg..."
+
+            XISO+=(
+              -map
+              "generated-kickstarts/${image}.cfg"
+              "/${image}.cfg"
+            )
+          done
+
+          XISO+=(
+            -update generated-grub.cfg /EFI/BOOT/grub.cfg
+            -update generated-grub.cfg /EFI/BOOT/grub2.cfg
+            -update generated-grub.cfg /boot/grub2/grub.cfg
+            -boot_image any replay
+          )
+
+          echo "Running xorriso..."
+          "${XISO[@]}"
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
@@ -114,3 +122,4 @@ jobs:
           path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
           retention-days: 14
           if-no-files-found: error
+
