@@ -137,7 +137,7 @@ jobs:
             -update generated-grub.cfg /EFI/BOOT/grub.cfg
             -update generated-grub.cfg /EFI/BOOT/grub2.cfg
             -update generated-grub.cfg /boot/grub2/grub.cfg
-            -boot_image any replay
+            -boot_image grub patch
           )
 
           echo "Running xorriso..."
