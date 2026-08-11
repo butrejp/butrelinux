@@ -83,7 +83,24 @@ jobs:
                  /work/generated-kickstarts/hwe.cfg \
                  /work/cs10-boot.iso \
                  /work/results/base.iso"
-                 
+
+      - name: Inspect BIOS GRUB image
+        run: |
+          set -eux
+
+          mkdir -p eltorito
+
+          xorriso \
+            -indev results/base.iso \
+            -osirrox on \
+            -extract /images/eltorito.img eltorito/eltorito.img
+
+          file eltorito/eltorito.img
+          ls -lh eltorito/eltorito.img
+
+          echo "Searching BIOS GRUB image for configuration:"
+          strings eltorito/eltorito.img | grep -Ei 'grub|cfg|menuentry|boot/grub' || true
+
       - name: Inspect boot structure
         run: |
           xorriso -indev results/base.iso \
