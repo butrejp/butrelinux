@@ -95,11 +95,14 @@ jobs:
             -osirrox on \
             -extract /images/eltorito.img eltorito/eltorito.img
 
-          file eltorito/eltorito.img
-          ls -lh eltorito/eltorito.img
-
-          echo "Searching BIOS GRUB image for configuration:"
-          strings eltorito/eltorito.img | grep -Ei 'grub|cfg|menuentry|boot/grub' || true
+          sudo podman run --rm \
+            -v "$GITHUB_WORKSPACE:/work:z" \
+            quay.io/centos/centos:stream10 \
+          /bin/bash -c '
+            dnf install -y grub2-tools grub2-tools-extra
+            grub2-file /work/eltorito/eltorito.img || true
+            grub2-mkimage --version
+          '
 
       - name: Inspect boot structure
         run: |
