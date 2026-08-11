@@ -83,6 +83,14 @@ jobs:
                  /work/generated-kickstarts/hwe.cfg \
                  /work/cs10-boot.iso \
                  /work/results/base.iso"
+                 
+      - name: Inspect boot structure
+        run: |
+          xorriso -indev results/base.iso \
+            -report_el_torito as_mkisofs
+
+          xorriso -indev results/base.iso \
+            -report_system_area plain
 
       - name: Inject Configurations
         run: |
