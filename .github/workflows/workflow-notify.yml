@@ -3,8 +3,8 @@ name: Fluxer Workflow Notifications
 on:
   workflow_run:
     workflows:
-      - "build butrelinux mainline images"
-      - "Build Butrelinux ISO"
+      - "Build butrelinux images"
+      - "Build butrelinux ISO"
     types:
       - completed
 
