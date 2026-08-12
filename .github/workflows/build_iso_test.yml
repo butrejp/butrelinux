@@ -98,14 +98,15 @@ jobs:
         run: |
           set -eu
           
-          # Start from the official efiboot.img (downloaded separately)
           cp cs10-efiboot.img /tmp/efiboot.img
           
           export MTOOLS_SKIP_CHECK=1
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
           
-          # Place the modified EFI image into the ISO tree so -e images/efiboot.img works
+          # Also place the modified image into the ISO tree.
+          # This is NOT needed for DD booting, but some tools (Rufus ISO mode,
+          # manual file extraction) expect to find it inside the filesystem.
           mkdir -p iso-root/images
           cp /tmp/efiboot.img iso-root/images/efiboot.img
           
@@ -118,18 +119,16 @@ jobs:
           
           iso_out="results/butrelinux-unified-${BUILD_DATE}.iso"
           
-          # Extract the MBR template from the original boot.iso for isohybrid
-          dd if=cs10-boot.iso of=/tmp/isohdpfx.bin bs=1 count=432 status=none
-          
           MKISOFS=(
             xorriso -as mkisofs
             -r                          # Rock Ridge
             -V "BUTRELINUX"             # Volume ID
             -J                          # Joliet
             -joliet-long                # Long Joliet names
+            -partition_offset 16          # Shift ISO fs so GPT partition 1 is mountable
           )
           
-          # --- Legacy BIOS boot (isolinux) ---
+          # --- Legacy BIOS boot (if isolinux exists) ---
           if [ -f iso-root/isolinux/isolinux.bin ]; then
             echo "Adding BIOS boot support..."
             MKISOFS+=(
@@ -138,26 +137,31 @@ jobs:
               -no-emul-boot
               -boot-load-size 4
               -boot-info-table
-              -isohybrid-mbr /tmp/isohdpfx.bin
             )
+            if [ -f /usr/lib/ISOLINUX/isohdpfx.bin ]; then
+              MKISOFS+=(-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin)
+            elif [ -f /usr/share/syslinux/isohdpfx.bin ]; then
+              MKISOFS+=(-isohybrid-mbr /usr/share/syslinux/isohdpfx.bin)
+            fi
           fi
           
-          # --- UEFI El Torito boot image (ISO mode) ---
+          # --- UEFI: Append modified EFI image as partition 2 (ESP) ---
+          # This creates a real ESP partition in the GPT for DD mode.
+          MKISOFS+=(
+            -append_partition 2 0xef /tmp/efiboot.img
+            -appended_part_as_gpt
+          )
+          
+          # --- UEFI: El Torito points to the SAME appended partition ---
+          # This makes the ISO bootable on optical media too, using the
+          # identical EFI image that DD mode will use.
           MKISOFS+=(
             -eltorito-alt-boot
-            -e images/efiboot.img
+            -e --interval:appended_partition_2:all::
             -no-emul-boot
           )
           
-          # --- GPT partition table for DD mode ---
-          MKISOFS+=(-isohybrid-gpt-basdat)
-          
-          # --- CRITICAL: Append EFI image as partition 2 (type 0xEF = ESP) ---
-          # When dd'd to USB, UEFI firmware reads the partition table, finds
-          # this ESP, mounts it, and loads our custom grub.cfg from inside.
-          MKISOFS+=(-append_partition 2 0xef /tmp/efiboot.img)
-          
-          # Output file and source directory
+          # Output
           MKISOFS+=(-o "$iso_out" iso-root/)
           
           echo "=== Building ISO ==="
@@ -174,10 +178,10 @@ jobs:
           echo "=== File info ==="
           ls -lh "$iso"
           
-          echo -e "\n=== El Torito boot images (ISO mode) ==="
+          echo -e "\n=== El Torito boot images ==="
           xorriso -indev "$iso" -report_el_torito plain 2>&1 || true
           
-          echo -e "\n=== Partition table (DD mode) ==="
+          echo -e "\n=== Partition table ==="
           fdisk -l "$iso" 2>&1 || true
           
           echo -e "\n=== GPT partitions ==="
@@ -206,7 +210,7 @@ jobs:
 
       - name: Cleanup intermediate files
         if: always()
-        run: rm -rf cs10-boot.iso cs10-efiboot.img iso-root /tmp/efiboot.img /tmp/isohdpfx.bin /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
+        run: rm -rf cs10-boot.iso cs10-efiboot.img iso-root /tmp/efiboot.img /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
