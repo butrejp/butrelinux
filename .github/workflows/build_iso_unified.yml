@@ -1,4 +1,4 @@
-name: Build Butrelinux ISO
+name: Build butrelinux ISO
 
 permissions:
   contents: write
