@@ -1,7 +1,7 @@
 ## items
 
 #### big:  
-b1: there's some bashisms in the current version of custom-kernel that I need to clean up or just go full bash.  
+b1: validate and promote custom-kernels-experimental
 
 b3: implment a mechanism to pin the kickstarts to a particular tag automatically instead of just letting them do latest.  
 
