@@ -1,13 +1,11 @@
 name: custom-kernel
-shortdesc: Install a custom kernel on Fedora or EL (RHEL/CentOS Stream/Rocky/AlmaLinux) based images.
+shortdesc: Install the CachyOS LTO kernel on EL10-based images with optional ZFS, NVIDIA, and SecureBoot signing.
 example: |
   type: custom-kernel
-  kernel: cachyos-lto   # Default: cachyos-lto on Fedora, elrepo-ml on EL
-                        # Fedora (COPR-backed):  cachyos, cachyos-lts, cachyos-rt, cachyos-lto, cachyos-lts-lto
-                        # EL (ELRepo-backed):    elrepo-ml, elrepo-lt (elrepo-lt not published for every EL release)
-  nvidia: true          # Default: false — also install the nvidia kmod
+  # Kernel type is hardcoded to cachyos-lto. No other kernels are supported.
   initramfs: true       # Default: false — generate a dracut initramfs for the installed kernel
-  zfs: true             # Default: false — also install the zfs kmod
+  nvidia: true          # Default: false — build and install the NVIDIA driver from upstream .run payload
+  zfs: true             # Default: false — build and install OpenZFS via DKMS
   sign:                 # Optional — omit the entire block to disable SecureBoot signing
     key: /tmp/certs/MOK.key
     cert: /tmp/certs/MOK.pem
@@ -23,4 +21,3 @@ example: |
     mount:
       type: file
       destination: /tmp/certs/MOK.pem
-      

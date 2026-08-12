@@ -1,8 +1,8 @@
 #!/bin/sh
 
 #### derived from https://github.com/jokokucing/Origami-Linux/blob/main/modules/custom-kernel/custom-kernel.sh
-#### Patched for Fedora + EL (RHEL / CentOS Stream / Rocky Linux / AlmaLinux) portability.
-#### DNF5 is a soft requirement, however DNF4 should work, just may require some minor tweaks.
+#### Hardened for EL10 + cachyos-lto only.
+#### DNF5 is a soft requirement; DNF4 should work with minor tweaks.
 #### NOTE: this module is largely untested.  caveat emptor.
 
 set -eu
@@ -13,55 +13,32 @@ err() { printf '[custom-kernel] Error: %s\n' "$*" >&2; }
 log "Starting custom-kernel module..."
 
 # ---------------------------------------------------------------------------
-# Distro detection (Fedora vs Enterprise Linux derivatives)
+# Distro detection (EL10 only)
 # ---------------------------------------------------------------------------
-# NOTE: on RHEL/CentOS/Rocky/Alma, /etc/os-release sets ID_LIKE="fedora" (a
-# historical artifact), so IS_FEDORA must be decided from ID, never ID_LIKE.
 
-OS_ID=""
-OS_ID_LIKE=""
 if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
-    OS_ID="${ID:-}"
-    OS_ID_LIKE="${ID_LIKE:-}"
-fi
-
-IS_FEDORA=false
-IS_EL=false
-EL_VERSION=""
-
-case "${OS_ID}" in
-fedora)
-    IS_FEDORA=true
-    ;;
-rhel | centos | rocky | almalinux | ol | miraclelinux | virtuozzo)
-    IS_EL=true
-    ;;
-*)
-    case " ${OS_ID_LIKE} " in
-    *" rhel "* | *" centos "*)
-        IS_EL=true
+    case "${ID:-}" in
+    rhel | centos | rocky | almalinux | ol | miraclelinux | virtuozzo | butrelinux)
+        ;;
+    *)
+        err "Unsupported distro: ${ID:-<unknown>}. This module only supports EL10."
+        exit 1
         ;;
     esac
-    ;;
-esac
-
-if [ "${IS_EL}" = "true" ]; then
-    EL_VERSION=$(rpm -E %rhel)
-fi
-
-if [ "${IS_FEDORA}" != "true" ] && [ "${IS_EL}" != "true" ]; then
-    err "Unable to determine base distro from /etc/os-release (ID=${OS_ID:-<unknown>} ID_LIKE=${OS_ID_LIKE:-<unknown>})."
-    err "This module only supports Fedora and EL (RHEL/CentOS Stream/Rocky/AlmaLinux) derivatives."
+else
+    err "/etc/os-release not found."
     exit 1
 fi
 
-if [ "${IS_FEDORA}" = "true" ]; then
-    log "Detected base distro: Fedora"
-else
-    log "Detected base distro: EL ${EL_VERSION}"
+EL_VERSION=$(rpm -E %rhel)
+if [ "${EL_VERSION}" != "10" ]; then
+    err "This module only supports EL10 (detected: EL${EL_VERSION})."
+    exit 1
 fi
+
+log "Detected base distro: EL ${EL_VERSION}"
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -76,15 +53,14 @@ SIGNING_CERT=$(printf '%s' "$1"| jq -r '.sign.cert // ""')
 MOK_PASSWORD=$(printf '%s' "$1"| jq -r '.sign["mok-password"] // ""')
 SECURE_BOOT=false
 
-# Default kernel type is distro-dependent. CachyOS kernels are available on
-# Fedora and EL 9/10 via COPR, but EL still defaults to ELRepo unless the
-# user explicitly opts into a COPR kernel.
 if [ -z "${KERNEL_TYPE}" ]; then
-    if [ "${IS_FEDORA}" = "true" ]; then
-        KERNEL_TYPE="cachyos-lto"
-    else
-        KERNEL_TYPE="elrepo-ml"
-    fi
+    KERNEL_TYPE="cachyos-lto"
+fi
+
+if [ "${KERNEL_TYPE}" != "cachyos-lto" ]; then
+    err "Unsupported kernel type: ${KERNEL_TYPE}"
+    err "This module only supports: cachyos-lto"
+    exit 1
 fi
 
 if [ -z "${SIGNING_KEY}" ] && [ -z "${SIGNING_CERT}" ] && [ -z "${MOK_PASSWORD}" ]; then
@@ -117,89 +93,13 @@ if [ "${SECURE_BOOT}" = "true" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Kernel package resolution
+# Kernel package resolution (cachyos-lto only)
 # ---------------------------------------------------------------------------
-# REPO_BACKEND says how KERNEL_PACKAGES get fetched:
-#   copr   - Fedora COPR (bieszczaders' CachyOS kernel builds; Fedora only)
-#   elrepo - ELRepo's kernel-ml/kernel-lt (EL only)
 
-# TRANSIENT: space-separated build-only packages removed from the image after signing.
-TRANSIENT=""
-
-case "${KERNEL_TYPE}" in
-cachyos-lto)
-    REPO_BACKEND="copr"
-    COPR_REPO="bieszczaders/kernel-cachyos-lto"
-    KERNEL_PKG="kernel-cachyos-lto"
-    KERNEL_DEVEL_PKG="kernel-cachyos-lto-devel-matched kernel-cachyos-lto-devel"
-    KERNEL_PACKAGES="kernel-cachyos-lto kernel-cachyos-lto-core kernel-cachyos-lto-modules kernel-cachyos-lto-devel-matched"
-    ;;
-cachyos-lts-lto)
-    REPO_BACKEND="copr"
-    COPR_REPO="bieszczaders/kernel-cachyos-lto"
-    KERNEL_PKG="kernel-cachyos-lts-lto"
-    KERNEL_DEVEL_PKG="kernel-cachyos-lts-lto-devel-matched"
-    KERNEL_PACKAGES="kernel-cachyos-lts-lto kernel-cachyos-lts-lto-core kernel-cachyos-lts-lto-modules kernel-cachyos-lts-lto-devel-matched"
-    ;;
-cachyos)
-    REPO_BACKEND="copr"
-    COPR_REPO="bieszczaders/kernel-cachyos"
-    KERNEL_PKG="kernel-cachyos"
-    KERNEL_DEVEL_PKG="kernel-cachyos-devel-matched"
-    KERNEL_PACKAGES="kernel-cachyos kernel-cachyos-core kernel-cachyos-modules kernel-cachyos-devel-matched"
-    ;;
-cachyos-rt)
-    REPO_BACKEND="copr"
-    COPR_REPO="bieszczaders/kernel-cachyos"
-    KERNEL_PKG="kernel-cachyos-rt"
-    KERNEL_DEVEL_PKG="kernel-cachyos-rt-devel-matched"
-    KERNEL_PACKAGES="kernel-cachyos-rt kernel-cachyos-rt-core kernel-cachyos-rt-modules kernel-cachyos-rt-devel-matched"
-    ;;
-cachyos-lts)
-    REPO_BACKEND="copr"
-    COPR_REPO="bieszczaders/kernel-cachyos"
-    KERNEL_PKG="kernel-cachyos-lts"
-    KERNEL_DEVEL_PKG="kernel-cachyos-lts-devel-matched"
-    KERNEL_PACKAGES="kernel-cachyos-lts kernel-cachyos-lts-core kernel-cachyos-lts-modules kernel-cachyos-lts-devel-matched"
-    ;;
-elrepo-ml)
-    REPO_BACKEND="elrepo"
-    KERNEL_PKG="kernel-ml"
-    KERNEL_DEVEL_PKG="kernel-ml-devel"
-    KERNEL_PACKAGES="kernel-ml kernel-ml-core kernel-ml-modules kernel-ml-modules-extra kernel-ml-devel"
-    ;;
-elrepo-lt)
-    REPO_BACKEND="elrepo"
-    KERNEL_PKG="kernel-lt"
-    KERNEL_DEVEL_PKG="kernel-lt-devel"
-    KERNEL_PACKAGES="kernel-lt kernel-lt-core kernel-lt-modules kernel-lt-modules-extra kernel-lt-devel"
-    if [ "${IS_EL}" = "true" ] && [ "${EL_VERSION}" -ge 10 ] 2>/dev/null; then
-        log "Warning: ELRepo has not published kernel-lt for EL${EL_VERSION} as of this writing (kernel-ml only); this may fail to install."
-    fi
-    ;;
-*)
-    err "Unsupported kernel type: ${KERNEL_TYPE}"
-    err "Fedora (COPR-backed): cachyos, cachyos-lts, cachyos-rt, cachyos-lto, cachyos-lts-lto"
-    err "EL (ELRepo-backed):   elrepo-ml, elrepo-lt"
-    exit 1
-    ;;
-esac
-
-TRANSIENT="${TRANSIENT}"
-
-case "${REPO_BACKEND}" in
-copr)
-    # CachyOS kernels are published via COPR for both Fedora and EL (EPEL 9/10).
-    : # no-op — valid on all supported distros
-    ;;
-elrepo)
-    if [ "${IS_EL}" != "true" ]; then
-        err "Kernel type '${KERNEL_TYPE}' is sourced from ELRepo and is only available on EL-based images."
-        err "On Fedora use one of: cachyos, cachyos-lts, cachyos-rt, cachyos-lto, cachyos-lts-lto."
-        exit 1
-    fi
-    ;;
-esac
+COPR_REPO="bieszczaders/kernel-cachyos-lto"
+KERNEL_PKG="kernel-cachyos-lto"
+KERNEL_DEVEL_PKG="kernel-cachyos-lto-devel-matched kernel-cachyos-lto-devel"
+KERNEL_PACKAGES="kernel-cachyos-lto kernel-cachyos-lto-core kernel-cachyos-lto-modules kernel-cachyos-lto-devel-matched"
 
 # ---------------------------------------------------------------------------
 # Helper functions
@@ -224,19 +124,6 @@ restore_kernel_install_hooks() {
     do
         [ -f "${_f}.bak" ] && mv -f "${_f}.bak" "${_f}"
     done
-}
-
-disable_akmodsbuild() {
-    _ak="/usr/sbin/akmodsbuild"
-    [ -f "${_ak}" ] || { err "akmodsbuild not found: ${_ak}"; return 1; }
-    cp -p "${_ak}" "${_ak}.backup" || return 1
-    sed '/if \[\[ -w \/var \]\] ; then/,/fi/d' "${_ak}" > "${_ak}.tmp" && mv "${_ak}.tmp" "${_ak}" || return 1
-    chmod +x "${_ak}"
-}
-
-restore_akmodsbuild() {
-    [ -f /usr/sbin/akmodsbuild.backup ] \
-        && mv -f /usr/sbin/akmodsbuild.backup /usr/sbin/akmodsbuild
 }
 
 sign_kernel() {
@@ -264,6 +151,7 @@ sign_kernel_modules() {
     find "${_module_root}" -type f \( \
         -name "*.ko" -o -name "*.ko.xz" -o -name "*.ko.zst" -o -name "*.ko.gz" \
     \) >"${_tmplist}"
+    # shellcheck disable=SC2094
     while IFS= read -r _mod; do
         case "${_mod}" in
         *.ko)
@@ -328,17 +216,13 @@ EOF
 }
 
 # ---------------------------------------------------------------------------
-# EL prerequisite repos (EPEL + CRB/PowerTools)
+# EL10 prerequisite repos (EPEL + CRB)
 # ---------------------------------------------------------------------------
 
-if [ "${IS_EL}" = "true" ]; then
-    log "Enabling EPEL and CRB/PowerTools repos."
-    dnf -y install "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${EL_VERSION}.noarch.rpm"
-    dnf -y install dnf-plugins-core
-    dnf config-manager --set-enabled crb 2>/dev/null \
-        || dnf config-manager --set-enabled powertools 2>/dev/null \
-        || true
-fi
+log "Enabling EPEL and CRB repos."
+dnf -y install "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${EL_VERSION}.noarch.rpm"
+dnf -y install dnf-plugins-core
+dnf config-manager --set-enabled crb
 
 # ---------------------------------------------------------------------------
 # Install kernel
@@ -358,24 +242,13 @@ dnf -y remove \
     kernel-devel-matched || true
 rm -rf /usr/lib/modules/* || true
 
-log "Resolving kernel source (${KERNEL_TYPE}, backend: ${REPO_BACKEND})."
-case "${REPO_BACKEND}" in
-copr)
-    dnf -y install dnf-plugins-core
-    log "Enabling COPR repo: ${COPR_REPO}"
-    dnf -y copr enable "${COPR_REPO}"
-    log "Installing kernel packages: ${KERNEL_PACKAGES}"
-    # shellcheck disable=SC2086
-    dnf -y install $KERNEL_PACKAGES akmods
-    ;;
-elrepo)
-    log "Enabling ELRepo kernel channel."
-    dnf -y install "https://www.elrepo.org/elrepo-release-${EL_VERSION}.el${EL_VERSION}.elrepo.noarch.rpm"
-    log "Installing kernel packages: ${KERNEL_PACKAGES}"
-    # shellcheck disable=SC2086
-    dnf -y --enablerepo=elrepo-kernel install $KERNEL_PACKAGES akmods
-    ;;
-esac
+log "Resolving kernel source (cachyos-lto via COPR)."
+dnf -y install dnf-plugins-core
+log "Enabling COPR repo: ${COPR_REPO}"
+dnf -y copr enable "${COPR_REPO}"
+log "Installing kernel packages: ${KERNEL_PACKAGES}"
+# shellcheck disable=SC2086
+dnf -y install $KERNEL_PACKAGES akmods
 
 KERNEL_VERSION=$(rpm -q "${KERNEL_PKG}" --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort -V | tail -n 1) || exit 1
 log "Kernel version: ${KERNEL_VERSION}"
@@ -385,15 +258,7 @@ log "Restoring kernel install scripts."
 restore_kernel_install_hooks
 
 log "Cleaning up kernel source repo configuration."
-case "${REPO_BACKEND}" in
-copr)
-    rm -f /etc/yum.repos.d/*copr*
-    ;;
-elrepo)
-    dnf -y remove elrepo-release || true
-    rm -f /etc/yum.repos.d/elrepo*.repo
-    ;;
-esac
+rm -f /etc/yum.repos.d/*copr*
 
 # ---------------------------------------------------------------------------
 # Build v4l2loopback
@@ -402,21 +267,15 @@ esac
 log "Building v4l2loopback module for kernel: ${KERNEL_VERSION}"
 
 log "Enabling RPM Fusion Free repo."
-if [ "${IS_FEDORA}" = "true" ]; then
-    dnf -y install \
-        "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
-else
-    dnf -y install \
-        "https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${EL_VERSION}.noarch.rpm"
-fi
+dnf -y install \
+    "https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${EL_VERSION}.noarch.rpm"
 
 dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts \
     akmod-v4l2loopback
-TRANSIENT="${TRANSIENT} akmod-v4l2loopback"
 
-# Some kernels (e.g. ELRepo kernel-ml) intentionally do not provide
-# kernel-uname-r, causing akmods' DNF install step to fail even though the
-# build itself succeeds. We ignore that error and handle installation manually.
+# Some kernels intentionally do not provide kernel-uname-r, causing akmods'
+# DNF install step to fail even though the build itself succeeds. We ignore
+# that error and handle installation manually.
 akmods --force --verbose --kernels "${KERNEL_VERSION}" --kmod v4l2loopback || true
 
 _kmod_rpm=$(find /var/cache/akmods/v4l2loopback -maxdepth 1 \
@@ -459,25 +318,13 @@ rm -f /etc/yum.repos.d/rpmfusion-free*.repo
 # ---------------------------------------------------------------------------
 # Build OpenZFS (DKMS)
 # ---------------------------------------------------------------------------
-# ZFS isn't in RPM Fusion (its CDDL license keeps it out of the akmods/RPM
-# Fusion ecosystem entirely), and OpenZFS's own precompiled "kABI-tracking
-# kmod" packages are only verified against the distro's own stock kernel -
-# neither applies to a swapped-in custom kernel. This always builds via DKMS
-# against ${KERNEL_VERSION} explicitly, which is also the zfs-release repo's
-# default mode on both Fedora and EL, so no repo-switching is needed.
+# ZFS isn't in RPM Fusion, and OpenZFS's precompiled kABI-tracking kmods are
+# only verified against the distro stock kernel. This always builds via DKMS
+# against ${KERNEL_VERSION}.
 #
-# NOTE: DKMS builds can fail against very new/non-distribution kernels
-# (elrepo-ml especially, and fresh CachyOS bumps) if OpenZFS hasn't caught
-# up to a recent kernel API change yet - that's an upstream compatibility
-# gap, not a bug here. Check https://github.com/openzfs/zfs/issues if the
-# build below fails.
-#
-# NOTE: zfs-dkms/dkms are deliberately NOT added to TRANSIENT. Removing
-# zfs-dkms via dnf fires its %preun, which calls `dkms remove` and deletes
-# the very .ko files we just built for ${KERNEL_VERSION} - unlike akmods'
-# kmod-* packages (a separate, already-compiled RPM from the akmod-*
-# build-only package), DKMS has no such split: the build tooling and the
-# built module are the same package here, so it stays installed.
+# NOTE: zfs-dkms/dkms are deliberately NOT removed after build. Removing
+# zfs-dkms triggers its %preun, which calls `dkms remove` and deletes the
+# very .ko files we just built.
 
 if [ "${ZFS}" = "true" ]; then
     log "Building OpenZFS (DKMS) for kernel: ${KERNEL_VERSION}"
@@ -493,20 +340,15 @@ if [ "${ZFS}" = "true" ]; then
     dnf -y install dkms gcc make $ZFS_BUILD_TOOLS
     dnf mark install dkms
 
-    # this is just to get the zfs-release repo config and gpg keys installed; the actual ZFS packages are downloaded from the testing repo below
-    if [ "${IS_FEDORA}" = "true" ]; then
-        dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
-    else
-        dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-0$(rpm --eval '%{dist}').noarch.rpm"
-    fi
+    # Install zfs-release to get repo config and GPG keys
+    dnf -y install "https://zfsonlinux.org/epel/zfs-release-3-0$(rpm --eval '%{dist}').noarch.rpm"
 
     # -----------------------------------------------------------------
     # Discover latest ZFS version + library names from testing repo
     # -----------------------------------------------------------------
 
-    # OpenZFS is a bunch of absolute shitbags who refuse to provide an HTTPS endpoint.  there's nothing I can do about this.  flood them with issue reports.
-    # I do rpm --checksig later, so it's not the end of the world, but this is a shitshow.
-    ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/10.1/x86_64"
+    # NOTE: OpenZFS testing repo is HTTP-only.
+    ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/${EL_VERSION}.1/x86_64"
 
     ZFS_LATEST=$(curl -fsL "${ZFS_REPO_URL}/" | \
         grep -o 'zfs-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-[0-9][0-9]*\.el10\.x86_64\.rpm' | \
@@ -525,9 +367,9 @@ if [ "${ZFS}" = "true" ]; then
     log "Discovered OpenZFS ${_zfs_ver}-${ZFS_REL} from testing repo."
 
     _discover_pkg() {
-        local pattern="$1"
+        _pattern="$1"
         curl -fsL "${ZFS_REPO_URL}/" | \
-            grep -o "${pattern}-${ZFS_VER}-${ZFS_REL}\.x86_64\.rpm" | \
+            grep -o "${_pattern}-${ZFS_VER}-${ZFS_REL}\.x86_64\.rpm" | \
             sed 's/-.*//' | sort -V | tail -n1
     }
 
@@ -536,12 +378,10 @@ if [ "${ZFS}" = "true" ]; then
     LIBZFS=$(_discover_pkg 'libzfs[0-9]*')
     LIBZPOOL=$(_discover_pkg 'libzpool[0-9]*')
 
-    for lib in LIBNVPAIR LIBUUTIL LIBZFS LIBZPOOL; do
-        if [ -z "${!lib}" ]; then
-            err "Could not discover ${lib} package for ZFS ${_zfs_ver}-${ZFS_REL}"
-            exit 1
-        fi
-    done
+    if [ -z "${LIBNVPAIR}" ] || [ -z "${LIBUUTIL}" ] || [ -z "${LIBZFS}" ] || [ -z "${LIBZPOOL}" ]; then
+        err "Could not discover ZFS library packages for ZFS ${_zfs_ver}-${ZFS_REL}"
+        exit 1
+    fi
 
     # -----------------------------------------------------------------
     # Download and install
@@ -611,41 +451,30 @@ if [ "${ZFS}" = "true" ]; then
     log "Cleaning up ZFS repo configuration."
     dnf -y remove zfs-release || true
     rm -f /etc/yum.repos.d/zfs*.repo
-
-    TRANSIENT="${TRANSIENT} ${ZFS_BUILD_TOOLS}"
 fi
-
 
 # ---------------------------------------------------------------------------
 # Build Nvidia via upstream .run payload
 # ---------------------------------------------------------------------------
-# NOTE: this section is largely distro-agnostic (it builds against the
-# upstream vendor .run installer, not RPM Fusion/dkms), so package names
-# below are the same list for Fedora and EL. dkms itself now comes from EPEL
-# on EL (enabled above); a couple of the Wayland/Mesa runtime packages (e.g.
-# egl-wayland) may additionally need CRB (also enabled above) depending on
-# your EL derivative and release channel - verify availability for your
-# specific EL10 build if the install step below fails on a package name.
 
 if [ "${NVIDIA}" = "true" ]; then
     log "Starting upstream NVIDIA payload build for kernel ${KERNEL_VERSION}."
 
-    # 1. Added explicit Mesa drivers to ensure software fallback works in VMs
+    # Explicit Mesa drivers ensure software fallback works in VMs
     NVIDIA_BUILD_TOOLS="perl elfutils-libelf-devel checkpolicy selinux-policy-devel clang llvm lld"
     NVIDIA_RUNTIME_DEPS="libglvnd libglvnd-egl libglvnd-gles libglvnd-glx libglvnd-opengl egl-x11 egl-wayland2 egl-gbm xorg-x11-server-Xwayland mesa-dri-drivers mesa-vulkan-drivers mesa-libEGL mesa-libGL"
 
     # shellcheck disable=SC2086
     dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=noscripts --setopt=skip_unavailable=1 $NVIDIA_BUILD_TOOLS $NVIDIA_RUNTIME_DEPS dkms curl tar bzip2 policycoreutils gcc make
 
-    if [[ ! -d "$KERNEL_SOURCE" ]]; then
+    if [ ! -d "$KERNEL_SOURCE" ]; then
         err "Missing kernel source path after installing devel package: $KERNEL_SOURCE"
         exit 1
     fi
 
-    # 2. Resolve the latest NVIDIA version from the directory listing.
-    #    latest.txt tracks the stable/production branch; scanning the
-    #    directory picks up the newest feature branch as well.
-    #    NOTE: feature branch drivers (e.g. 610.x) may be beta quality.
+    # Resolve the latest NVIDIA version from the directory listing.
+    # latest.txt tracks stable/production; directory scanning picks up
+    # the newest feature branch as well. Feature branch drivers may be beta.
     log "Resolving latest NVIDIA version from download.nvidia.com..."
     NVIDIA_VERSION=$(curl -fsSL https://download.nvidia.com/XFree86/Linux-x86_64/ | \
         grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | \
@@ -674,12 +503,12 @@ if [ "${NVIDIA}" = "true" ]; then
     )
 
     NVIDIA_SRC_DIR="$_tmpdir/NVIDIA-Linux-x86_64-${NVIDIA_VERSION}"
-    if [[ ! -d "$NVIDIA_SRC_DIR" ]]; then
+    if [ ! -d "$NVIDIA_SRC_DIR" ]; then
         err "Extracted NVIDIA source directory not found: $NVIDIA_SRC_DIR"
         exit 1
     fi
 
-    # 3. Compile and Install (REMOVED --install-libglvnd so Fedora controls display routing!)
+    # Compile and Install (omitted --install-libglvnd so distro controls display routing)
     log "Running NVIDIA installer with Clang/LLVM overrides..."
     env CC=clang LLVM=1 LD=ld.lld IGNORE_CC_MISMATCH=1 "$NVIDIA_SRC_DIR/nvidia-installer" \
         --silent \
@@ -697,7 +526,7 @@ if [ "${NVIDIA}" = "true" ]; then
 
     rm -rf "$_tmpdir"
 
-    # 4. Apply standard configuration files
+    # Apply standard configuration files
     mkdir -p /etc/modprobe.d /usr/lib/udev/rules.d /usr/lib/dracut/dracut.conf.d
 
     cat <<'EOF' > /etc/modprobe.d/nvidia.conf
@@ -732,11 +561,11 @@ kargs = [
 EOF
     chmod 0644 /usr/lib/bootc/kargs.d/90-nvidia.toml
 
-    # 5. Enable systemd services
+    # Enable systemd services
     systemctl enable nvidia-powerd.service >/dev/null 2>&1 || true
     systemctl enable nvidia-persistenced.service >/dev/null 2>&1 || true
 
-    # 6. Install NVIDIA Container Toolkit
+    # Install NVIDIA Container Toolkit
     log "Installing NVIDIA Container Toolkit..."
     curl -fsSL --retry 5 --create-dirs \
         https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo \
@@ -767,10 +596,6 @@ EOF
 enable nvctk-cdi.service
 EOF
     chmod 0644 /usr/lib/systemd/system-preset/70-nvctk-cdi.preset
-
-    # 7. Mark ONLY the compilers/build tools for removal, preserving the GUI libraries
-    # shellcheck disable=SC2086
-    TRANSIENT="${TRANSIENT} $NVIDIA_BUILD_TOOLS"
 
     # Generate module dependencies
     depmod "${KERNEL_VERSION}"
