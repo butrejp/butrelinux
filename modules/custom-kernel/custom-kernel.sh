@@ -493,6 +493,7 @@ if [ "${ZFS}" = "true" ]; then
     dnf -y install dkms gcc make $ZFS_BUILD_TOOLS
     dnf mark install dkms
 
+    # this is just to get the zfs-release repo config and gpg keys installed; the actual ZFS packages are downloaded from the testing repo below
     if [ "${IS_FEDORA}" = "true" ]; then
         dnf -y install "https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval '%{dist}').noarch.rpm"
     else
@@ -502,6 +503,8 @@ if [ "${ZFS}" = "true" ]; then
     # -----------------------------------------------------------------
     # Discover latest ZFS version + library names from testing repo
     # -----------------------------------------------------------------
+
+    # OpenZFS is a bunch of absolute shitbags who refuse to provide an HTTPS endpoint.  there's nothing I can do about this.  flood them with issue reports.
     ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/10.1/x86_64"
 
     ZFS_LATEST=$(curl -fsL "${ZFS_REPO_URL}/" | \
@@ -558,7 +561,10 @@ if [ "${ZFS}" = "true" ]; then
             exit 1
         }
     done
-
+    rpm --checksig ./*.rpm || {
+        err "OpenZFS RPM signature verification failed"
+        exit 1
+    }
     log "Installing OpenZFS ${_zfs_ver} RPMs (bypassing kernel-devel dep check)..."
     rpm -Uvh ./*.rpm --nodeps
     rm -f ./*.rpm
