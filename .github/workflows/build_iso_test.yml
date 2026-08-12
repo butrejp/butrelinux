@@ -12,6 +12,7 @@ jobs:
 
     env:
       IMAGES: "hwe nvidia lto-hwe lto-nvidia"
+      MIRROR: "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/os"
 
     steps:
       - name: Set build date
@@ -25,17 +26,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xorriso mtools dosfstools syslinux-utils
 
-      - name: Download base ISO
+      - name: Download base ISO and EFI image
         run: |
           mkdir -p results
           curl -fL -o cs10-boot.iso \
-            "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+            "${MIRROR}/images/boot.iso"
+          curl -fL -o cs10-efiboot.img \
+            "${MIRROR}/images/efiboot.img"
 
       - name: Extract base ISO contents
         run: |
           set -eu
           mkdir -p iso-root
-          # Extract the entire ISO filesystem to a directory
           xorriso -osirrox on -indev cs10-boot.iso -extract / iso-root/
           
           echo "=== Top-level contents ==="
@@ -81,13 +83,12 @@ jobs:
         run: |
           set -eu
           
-          # 1. Copy kickstarts to ISO root (accessible at hd:LABEL=BUTRELINUX:/)
+          # 1. Copy kickstarts to ISO root
           for image in $IMAGES; do
             cp "generated-kickstarts/${image}.cfg" "iso-root/${image}.cfg"
           done
           
-          # 2. Update GRUB configs in the extracted ISO tree.
-          #    These are used when booting in ISO mode (El Torito).
+          # 2. Update GRUB configs for ISO-mode paths
           mkdir -p iso-root/EFI/BOOT iso-root/boot/grub2
           cp generated-grub.cfg iso-root/EFI/BOOT/grub.cfg
           cp generated-grub.cfg iso-root/EFI/BOOT/grub2.cfg || true
@@ -97,22 +98,15 @@ jobs:
         run: |
           set -eu
           
-          # The original ISO has a FAT image at images/efiboot.img that serves
-          # as the EFI System Partition. We extract it, inject our custom
-          # grub.cfg, and keep it for both the ISO filesystem and the DD partition.
-          
-          if [ ! -f iso-root/images/efiboot.img ]; then
-            echo "ERROR: images/efiboot.img not found in base ISO"
-            exit 1
-          fi
-          
-          cp iso-root/images/efiboot.img /tmp/efiboot.img
+          # Start from the official efiboot.img (downloaded separately)
+          cp cs10-efiboot.img /tmp/efiboot.img
           
           export MTOOLS_SKIP_CHECK=1
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
           
-          # Replace the one in the ISO tree so -e images/efiboot.img points to the modified copy
+          # Place the modified EFI image into the ISO tree so -e images/efiboot.img works
+          mkdir -p iso-root/images
           cp /tmp/efiboot.img iso-root/images/efiboot.img
           
           echo "=== Modified EFI image ==="
@@ -124,33 +118,28 @@ jobs:
           
           iso_out="results/butrelinux-unified-${BUILD_DATE}.iso"
           
+          # Extract the MBR template from the original boot.iso for isohybrid
+          dd if=cs10-boot.iso of=/tmp/isohdpfx.bin bs=1 count=432 status=none
+          
           MKISOFS=(
             xorriso -as mkisofs
-            -r                          # Rock Ridge, preserve permissions
-            -V "BUTRELINUX"             # Volume ID (must match inst.ks=hd:LABEL=...)
-            -J                          # Joliet extensions
+            -r                          # Rock Ridge
+            -V "BUTRELINUX"             # Volume ID
+            -J                          # Joliet
             -joliet-long                # Long Joliet names
           )
           
           # --- Legacy BIOS boot (isolinux) ---
-          # CentOS Stream 10 is UEFI-only on x86_64, but we keep this conditional
-          # in case the base ISO still carries isolinux for compatibility.
           if [ -f iso-root/isolinux/isolinux.bin ]; then
-            echo "Adding BIOS boot support via isolinux..."
+            echo "Adding BIOS boot support..."
             MKISOFS+=(
               -b isolinux/isolinux.bin
               -c isolinux/boot.cat
               -no-emul-boot
               -boot-load-size 4
               -boot-info-table
+              -isohybrid-mbr /tmp/isohdpfx.bin
             )
-            
-            # Hybrid MBR for BIOS USB boot
-            if [ -f /usr/lib/ISOLINUX/isohdpfx.bin ]; then
-              MKISOFS+=(-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin)
-            elif [ -f /usr/share/syslinux/isohdpfx.bin ]; then
-              MKISOFS+=(-isohybrid-mbr /usr/share/syslinux/isohdpfx.bin)
-            fi
           fi
           
           # --- UEFI El Torito boot image (ISO mode) ---
@@ -161,13 +150,11 @@ jobs:
           )
           
           # --- GPT partition table for DD mode ---
-          # This creates a GPT entry for the ISO filesystem itself
           MKISOFS+=(-isohybrid-gpt-basdat)
           
           # --- CRITICAL: Append EFI image as partition 2 (type 0xEF = ESP) ---
-          # When the ISO is written to USB in DD mode, UEFI firmware reads the
-          # partition table, finds this ESP, mounts it, and loads our custom
-          # grub.cfg from inside. This is what makes DD mode work.
+          # When dd'd to USB, UEFI firmware reads the partition table, finds
+          # this ESP, mounts it, and loads our custom grub.cfg from inside.
           MKISOFS+=(-append_partition 2 0xef /tmp/efiboot.img)
           
           # Output file and source directory
@@ -201,11 +188,10 @@ jobs:
             xorriso -indev "$iso" -ls "/${image}.cfg" 2>&1 || true
           done
           
-          echo -e "\n=== Verify GRUB config in ISO filesystem (El Torito path) ==="
+          echo -e "\n=== Verify GRUB config in ISO filesystem ==="
           xorriso -indev "$iso" -cat /EFI/BOOT/grub.cfg 2>&1 | head -20 || true
           
-          echo -e "\n=== Extract and verify appended ESP partition (DD mode path) ==="
-          # Partition 2 is the ESP we appended. Extract it and diff against our config.
+          echo -e "\n=== Extract and verify appended ESP partition (DD mode) ==="
           part_start=$(sgdisk -p "$iso" 2>/dev/null | awk '/^   2 / {print $2}')
           part_size=$(sgdisk -p "$iso" 2>/dev/null | awk '/^   2 / {print $3 - $2 + 1}')
           if [ -n "$part_start" ] && [ -n "$part_size" ]; then
@@ -220,7 +206,7 @@ jobs:
 
       - name: Cleanup intermediate files
         if: always()
-        run: rm -rf cs10-boot.iso iso-root /tmp/efiboot.img /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
+        run: rm -rf cs10-boot.iso cs10-efiboot.img iso-root /tmp/efiboot.img /tmp/isohdpfx.bin /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
