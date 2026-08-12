@@ -8,7 +8,7 @@ b3: implment a mechanism to pin the kickstarts to a particular tag automatically
 #### medium: 
 m1: find alternatives to gnome50-el10-compat for tuned.ppd fix  
 m2: investigate akmods patch  
-m3: break out news into it's own .md  
+
 
 #### little:  
 l1: hibernate handling.  
@@ -16,6 +16,6 @@ l2: more complete secure boot.  depends on hibernate
 
 ## priority
 #### sorted by ease to payoff ratio:  
-[b3,m3,b1,m1,m2,b2,l1,l2]  
+[b3,b1,m1,m2,b2,l1,l2]  
 #### sorted by criticality:  
-[b2.b1,m2,b3,l1,l2,m1,m3]  
+[b2.b1,m2,b3,l1,l2,m1]  
