@@ -93,7 +93,7 @@ also got a unified iso in the works but matrix builds are easy so split installe
 20260715 UPDATE  
 unified iso was easier than I thought.  they've been available since yesterday.  still tweaking, so expect fresh releases to come regularly, but installer behavior shouldn't change much.  once I get it all sorted out it'll be monthly builds pushed automatically
 
-### new experimental branch
+#### new experimental branch
 20260802  
 this isn't really for users (though it might be worth checking out in a VM), but you can start to see some ideas of where I'm taking this.  for example, I just crammed the cachyos lto kernel onto an el10 userspace.  I've also started building a module to inject fedora packages in a more sane way than I had previously done (and abandoned for good reason).  
 if a shakedown run clears then these things will make it into the standard images.  the ultimate goal is to hopefully make multilib happen on el10 and ship a gaming variant that doesn't rely on giving podman your gpu.  we'll see how that goes though, don't expect a miracle.    
@@ -111,9 +111,13 @@ bootc switch --enforce-container-sigpolicy ghcr.io/butrejp/butrelinux-hwe:latest
 bootc switch ghcr.io/butrejp/butrelinux-nvidia:latest
 ```
 
-additionally, I've promoted experimental to main so we've all got lto kernels, and everything has inhereted kde 6.7 by now.  your welcome   
+additionally, I've promoted experimental to main so we can all have lto kernels, and everything has inhereted kde 6.7 by now.  your welcome   
 
 #### chunkah
 20260811  
 
 I've enabled chunkah on these builds in mainline, so your next bootc upgrade is gonna be huge.  mine was over 6 gigabytes.  future bootc upgrades however should be much smaller.  some of the upstream bluefin chunks are like 3 gigabytes and I'm hoping chunkah can shrink them down a bit  
+
+### new ISO workflow  
+20260811  
+this makes the ISOs workable with ```dd``` and drops the generation time to a frankly batshit 33 seconds.  also massively reduces maintenance burden for adding new variants.  next order of business will be to implement a mechanism to pin the kickstarts to a particular tag automatically instead of just letting them do latest.  
