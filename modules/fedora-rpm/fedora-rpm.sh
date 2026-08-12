@@ -13,7 +13,7 @@ fi
 ADDED_REPOS=()
 
 get_json_array REPOS 'try .["repos"][]' "$1"
-
+# shellcheck disable=SC2153
 if [[ ${#REPOS[@]} -gt 0 ]]; then
     echo "Adding repositories"
 

@@ -16,7 +16,7 @@ modules:
     source: local
     initramfs: true
     zfs: true
-    nvidia: false
+    nvidia: true
 
   - from-file: end.yml
   
