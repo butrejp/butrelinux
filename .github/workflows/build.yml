@@ -1,4 +1,4 @@
-name: build butrelinux mainline images
+name: butrelinux image build
 on:
   schedule:
     - cron:
