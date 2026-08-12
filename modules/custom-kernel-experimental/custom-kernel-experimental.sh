@@ -20,7 +20,7 @@ if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
     case "${ID:-}" in
-    rhel | centos | rocky | almalinux | ol | miraclelinux | virtuozzo)
+    rhel | centos | rocky | almalinux | ol | miraclelinux | virtuozzo | butrelinux)
         ;;
     *)
         err "Unsupported distro: ${ID:-<unknown>}. This module only supports EL10."
