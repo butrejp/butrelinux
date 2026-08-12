@@ -562,11 +562,7 @@ if [ "${ZFS}" = "true" ]; then
         }
     done
 
-    rpm -ql zfs-release | grep -Ei 'gpg|key'
-    rpm -qf /etc/yum.repos.d/zfs.repo 2>/dev/null || true
-    rpm -qa 'gpg-pubkey*'
-    
-    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openzfs
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openzfs-el-10
     rpm --checksig -v ./*.rpm || {
         err "OpenZFS RPM signature verification failed"
         exit 1
