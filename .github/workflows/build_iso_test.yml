@@ -1,4 +1,4 @@
-name: Build Butrelinux ISO test
+name: Build Butrelinux ISO (mkisofs)
 
 permissions:
   contents: write
@@ -23,7 +23,26 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman xorriso mtools
+          sudo apt-get install -y xorriso mtools dosfstools syslinux-utils
+
+      - name: Download base ISO
+        run: |
+          mkdir -p results
+          curl -fL -o cs10-boot.iso \
+            "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
+
+      - name: Extract base ISO contents
+        run: |
+          set -eu
+          mkdir -p iso-root
+          # Extract the entire ISO filesystem to a directory
+          xorriso -osirrox on -indev cs10-boot.iso -extract / iso-root/
+          
+          echo "=== Top-level contents ==="
+          ls -la iso-root/
+          
+          echo "=== Boot-related files ==="
+          find iso-root -maxdepth 3 \( -name "*.bin" -o -name "*.img" -o -name "grub.cfg" -o -name "grub2.cfg" \) -ls || true
 
       - name: Generate installer configurations
         run: |
@@ -55,100 +74,153 @@ jobs:
             { print }
           ' boot/grub.cfg > generated-grub.cfg
 
-          echo "Generated GRUB configuration:"
+          echo "=== Generated GRUB configuration ==="
           cat generated-grub.cfg
 
-      - name: Download base ISO
-        run: |
-          mkdir -p results
-          curl -fL -o cs10-boot.iso \
-            "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/iso/CentOS-Stream-10-latest-x86_64-boot.iso"
-
-      - name: Generate Base Installer ISO
+      - name: Inject configs into ISO tree
         run: |
           set -eu
-          sudo podman run --rm --privileged \
-            -v /dev:/dev \
-            -v "$GITHUB_WORKSPACE:/work:z" \
-            quay.io/centos/centos:stream10 \
-            /bin/bash -c \
-              "dnf install -y lorax && \
-               mkksiso \
-                 /work/generated-kickstarts/hwe.cfg \
-                 /work/cs10-boot.iso \
-                 /work/results/base.iso"
           
-          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/results"
+          # 1. Copy kickstarts to ISO root (accessible at hd:LABEL=BUTRELINUX:/)
+          for image in $IMAGES; do
+            cp "generated-kickstarts/${image}.cfg" "iso-root/${image}.cfg"
+          done
+          
+          # 2. Update GRUB configs in the extracted ISO tree.
+          #    These are used when booting in ISO mode (El Torito).
+          mkdir -p iso-root/EFI/BOOT iso-root/boot/grub2
+          cp generated-grub.cfg iso-root/EFI/BOOT/grub.cfg
+          cp generated-grub.cfg iso-root/EFI/BOOT/grub2.cfg || true
+          cp generated-grub.cfg iso-root/boot/grub2/grub.cfg
 
-      - name: Fix embedded EFI boot image for DD mode
+      - name: Build modified EFI boot image
         run: |
           set -eu
-
-          # Extract the hidden EFI image from the ISO
-          efi_info=$(xorriso -indev results/base.iso -toc 2>&1 | grep "EFI image start and size")
-          echo "$efi_info"
-          start_block=$(echo "$efi_info" | grep -oP '\d+(?= \* 2048)')
-          size_blocks=$(echo "$efi_info" | grep -oP '\d+(?= \* 512)')
-          dd if=results/base.iso of=/tmp/efiboot.img \
-            bs=512 skip=$((start_block * 4)) count=$size_blocks
-
-          # Modify the GRUB config inside the FAT image
+          
+          # The original ISO has a FAT image at images/efiboot.img that serves
+          # as the EFI System Partition. We extract it, inject our custom
+          # grub.cfg, and keep it for both the ISO filesystem and the DD partition.
+          
+          if [ ! -f iso-root/images/efiboot.img ]; then
+            echo "ERROR: images/efiboot.img not found in base ISO"
+            exit 1
+          fi
+          
+          cp iso-root/images/efiboot.img /tmp/efiboot.img
+          
           export MTOOLS_SKIP_CHECK=1
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
+          
+          # Replace the one in the ISO tree so -e images/efiboot.img points to the modified copy
+          cp /tmp/efiboot.img iso-root/images/efiboot.img
+          
+          echo "=== Modified EFI image ==="
+          ls -lh /tmp/efiboot.img iso-root/images/efiboot.img
 
-      - name: Inject Configurations
+      - name: Build unified hybrid ISO
         run: |
           set -eu
-
-          XISO=(
-            xorriso
-            -indev results/base.iso
-            -outdev "results/butrelinux-unified-${BUILD_DATE}.iso"
-            -volid "BUTRELINUX"
-            -boot_image any replay
-            -map /tmp/efiboot.img /images/efiboot.img
-            -boot_image any efi_path=/images/efiboot.img
+          
+          iso_out="results/butrelinux-unified-${BUILD_DATE}.iso"
+          
+          MKISOFS=(
+            xorriso -as mkisofs
+            -r                          # Rock Ridge, preserve permissions
+            -V "BUTRELINUX"             # Volume ID (must match inst.ks=hd:LABEL=...)
+            -J                          # Joliet extensions
+            -joliet-long                # Long Joliet names
           )
-
-          for image in $IMAGES; do
-            echo "Injecting ${image}.cfg..."
-            XISO+=(
-              -map
-              "generated-kickstarts/${image}.cfg"
-              "/${image}.cfg"
+          
+          # --- Legacy BIOS boot (isolinux) ---
+          # CentOS Stream 10 is UEFI-only on x86_64, but we keep this conditional
+          # in case the base ISO still carries isolinux for compatibility.
+          if [ -f iso-root/isolinux/isolinux.bin ]; then
+            echo "Adding BIOS boot support via isolinux..."
+            MKISOFS+=(
+              -b isolinux/isolinux.bin
+              -c isolinux/boot.cat
+              -no-emul-boot
+              -boot-load-size 4
+              -boot-info-table
             )
-          done
-
-          XISO+=(
-            -update generated-grub.cfg /EFI/BOOT/grub.cfg
-            -map generated-grub.cfg /EFI/BOOT/grub2.cfg
-            -update generated-grub.cfg /boot/grub2/grub.cfg
+            
+            # Hybrid MBR for BIOS USB boot
+            if [ -f /usr/lib/ISOLINUX/isohdpfx.bin ]; then
+              MKISOFS+=(-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin)
+            elif [ -f /usr/share/syslinux/isohdpfx.bin ]; then
+              MKISOFS+=(-isohybrid-mbr /usr/share/syslinux/isohdpfx.bin)
+            fi
+          fi
+          
+          # --- UEFI El Torito boot image (ISO mode) ---
+          MKISOFS+=(
+            -eltorito-alt-boot
+            -e images/efiboot.img
+            -no-emul-boot
           )
-
-          echo "Running xorriso..."
-          "${XISO[@]}"
+          
+          # --- GPT partition table for DD mode ---
+          # This creates a GPT entry for the ISO filesystem itself
+          MKISOFS+=(-isohybrid-gpt-basdat)
+          
+          # --- CRITICAL: Append EFI image as partition 2 (type 0xEF = ESP) ---
+          # When the ISO is written to USB in DD mode, UEFI firmware reads the
+          # partition table, finds this ESP, mounts it, and loads our custom
+          # grub.cfg from inside. This is what makes DD mode work.
+          MKISOFS+=(-append_partition 2 0xef /tmp/efiboot.img)
+          
+          # Output file and source directory
+          MKISOFS+=(-o "$iso_out" iso-root/)
+          
+          echo "=== Building ISO ==="
+          printf '%s\n' "${MKISOFS[*]}"
+          "${MKISOFS[@]}"
+          
+          sudo chown -R "$(id -u):$(id -g)" results
 
       - name: Verify ISO
         run: |
           set -eu
           iso="results/butrelinux-unified-${BUILD_DATE}.iso"
           
-          echo "=== ISO file ==="
+          echo "=== File info ==="
           ls -lh "$iso"
           
-          echo -e "\n=== El Torito boot images ==="
+          echo -e "\n=== El Torito boot images (ISO mode) ==="
           xorriso -indev "$iso" -report_el_torito plain 2>&1 || true
           
-          echo -e "\n=== Partition table ==="
+          echo -e "\n=== Partition table (DD mode) ==="
           fdisk -l "$iso" 2>&1 || true
           
-          echo -e "\n=== EFI image location ==="
-          xorriso -indev "$iso" -toc 2>&1 | grep -i "EFI image" || true
+          echo -e "\n=== GPT partitions ==="
+          sgdisk -p "$iso" 2>&1 || true
+          
+          echo -e "\n=== Verify kickstarts in ISO filesystem ==="
+          for image in $IMAGES; do
+            xorriso -indev "$iso" -ls "/${image}.cfg" 2>&1 || true
+          done
+          
+          echo -e "\n=== Verify GRUB config in ISO filesystem (El Torito path) ==="
+          xorriso -indev "$iso" -cat /EFI/BOOT/grub.cfg 2>&1 | head -20 || true
+          
+          echo -e "\n=== Extract and verify appended ESP partition (DD mode path) ==="
+          # Partition 2 is the ESP we appended. Extract it and diff against our config.
+          part_start=$(sgdisk -p "$iso" 2>/dev/null | awk '/^   2 / {print $2}')
+          part_size=$(sgdisk -p "$iso" 2>/dev/null | awk '/^   2 / {print $3 - $2 + 1}')
+          if [ -n "$part_start" ] && [ -n "$part_size" ]; then
+            dd if="$iso" of=/tmp/extracted-esp.img bs=512 skip="$part_start" count="$part_size" status=none
+            mcopy -i /tmp/extracted-esp.img ::/EFI/BOOT/grub.cfg /tmp/verify-dd-grub.cfg
+            echo "--- DD-mode GRUB config (first 20 lines) ---"
+            head -20 /tmp/verify-dd-grub.cfg
+            diff -u generated-grub.cfg /tmp/verify-dd-grub.cfg && echo "DD-mode GRUB config: MATCH"
+          else
+            echo "WARNING: Could not extract partition 2 for verification"
+          fi
 
       - name: Cleanup intermediate files
         if: always()
-        run: rm -f cs10-boot.iso results/base.iso /tmp/efiboot.img
+        run: rm -rf cs10-boot.iso iso-root /tmp/efiboot.img /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
