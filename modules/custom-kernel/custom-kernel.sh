@@ -561,6 +561,10 @@ if [ "${ZFS}" = "true" ]; then
             exit 1
         }
     done
+
+    rpm -ql zfs-release | grep -Ei 'gpg|key'
+    rpm -qf /etc/yum.repos.d/zfs.repo 2>/dev/null || true
+    rpm -qa 'gpg-pubkey*'
     
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openzfs
     rpm --checksig -v ./*.rpm || {
