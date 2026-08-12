@@ -11,12 +11,6 @@ modules:
   - type: butre-image-info
     source: local
     variant: experimental
-
-  - type: custom-kernel-experimental
-    source: local
-    initramfs: true
-    zfs: true
-    nvidia: true
-
+  # no tests currently in-progress
   - from-file: end.yml
   
