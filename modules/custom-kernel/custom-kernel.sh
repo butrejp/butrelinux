@@ -505,6 +505,7 @@ if [ "${ZFS}" = "true" ]; then
     # -----------------------------------------------------------------
 
     # OpenZFS is a bunch of absolute shitbags who refuse to provide an HTTPS endpoint.  there's nothing I can do about this.  flood them with issue reports.
+    # I do rpm --checksig later, so it's not the end of the world, but this is a shitshow.
     ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/10.1/x86_64"
 
     ZFS_LATEST=$(curl -fsL "${ZFS_REPO_URL}/" | \
