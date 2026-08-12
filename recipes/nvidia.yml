@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: butrelinux-nvidia
 description: Butrelinux Nvidia
-base-image: ghcr.io/projectbluefin/bluefin-lts-hwe
+base-image: ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia
 image-version: stable
 
 modules:

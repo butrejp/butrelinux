@@ -12,9 +12,8 @@ modules:
     source: local
     variant: experimental
 
-  - type: custom-kernel
+  - type: custom-kernel-experimental
     source: local
-    kernel: cachyos-lto
     initramfs: true
     zfs: true
     nvidia: false

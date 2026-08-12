@@ -1,0 +1,23 @@
+name: custom-kernel-experimental
+shortdesc: Install the CachyOS LTO kernel on EL10-based images with optional ZFS, NVIDIA, and SecureBoot signing.
+example: |
+  type: custom-kernel
+  # Kernel type is hardcoded to cachyos-lto. No other kernels are supported.
+  initramfs: true       # Default: false — generate a dracut initramfs for the installed kernel
+  nvidia: true          # Default: false — build and install the NVIDIA driver from upstream .run payload
+  zfs: true             # Default: false — build and install OpenZFS via DKMS
+  sign:                 # Optional — omit the entire block to disable SecureBoot signing
+    key: /tmp/certs/MOK.key
+    cert: /tmp/certs/MOK.pem
+    mok-password: BlueBuild
+  secrets:
+  - type: file
+    source: ./MOK.key
+    mount:
+      type: file
+      destination: /tmp/certs/MOK.key
+  - type: file
+    source: ./MOK.pem
+    mount:
+      type: file
+      destination: /tmp/certs/MOK.pem
