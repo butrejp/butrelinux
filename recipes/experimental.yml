@@ -11,5 +11,12 @@ modules:
     source: local
     variant: experimental
 
+  - type: custom-kernel
+    source: local
+    kernel: cachyos-lto
+    initramfs: true
+    zfs: true
+    nvidia: false
+    
   - from-file: end.yml
   
