@@ -561,7 +561,9 @@ if [ "${ZFS}" = "true" ]; then
             exit 1
         }
     done
-    rpm --checksig ./*.rpm || {
+    rpm -Kv ./zfs-2.4.2-1.el10.x86_64.rpm
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openzfs
+    rpm --checksig -v ./*.rpm || {
         err "OpenZFS RPM signature verification failed"
         exit 1
     }
