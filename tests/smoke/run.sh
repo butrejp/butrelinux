@@ -113,7 +113,6 @@ cat "$KICKSTART"
 # kickstart directly into WORKDIR before starting the HTTP server.
 #
 
-cp "$KICKSTART" "${WORKDIR}/smoke.cfg"
 
 echo "==> Starting Kickstart HTTP server"
 
