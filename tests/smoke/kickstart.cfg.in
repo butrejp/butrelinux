@@ -200,6 +200,20 @@ exit "$failures"
 EOF
 
 chmod 0755 /etc/butrelinux-smoke-user-check.sh
+mkdir -p /home/smoke/.config/autostart
+
+cat > /home/smoke/.config/autostart/butrelinux-smoke.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=butrelinux CI Smoke Test
+Comment=Run the butrelinux CI desktop smoke test
+Exec=/etc/butrelinux-smoke-user-check.sh
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+EOF
+
+chown -R smoke:smoke /home/smoke/.config
 
 cat > /etc/systemd/system/butrelinux-smoke-finish.service <<'EOF'
 [Unit]
@@ -229,7 +243,7 @@ USER_LOG="${RESULT_DIR}/user-check.log"
 mkdir -p "$RESULT_DIR"
 
 # Give SDDM/Plasma plenty of time to establish the user's session.
-for _ in $(seq 1 180); do
+for _ in $(seq 1 600); do
     if [[ -f "$RESULT_FILE" ]]; then
         break
     fi
