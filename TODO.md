@@ -5,6 +5,7 @@ b3: implment a mechanism to pin the kickstarts to a particular tag automatically
 
 #### medium: 
 m1: find alternatives to gnome50-el10-compat for tuned.ppd fix  
+        not currently planned.  investigating gnome50-el10-compat proves that it's actually a rather thin package.  blast radius is too small to worry about
 
 
 
@@ -14,6 +15,6 @@ l2: more complete secure boot.  depends on hibernate
 
 ## priority
 #### sorted by ease to payoff ratio:  
-[b3,m1,l1,l2]  
+[b3,l1,l2]  
 #### sorted by criticality:  
-[b3,l1,l2,m1]  
+[b3,l1,l2]  
