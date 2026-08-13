@@ -24,7 +24,18 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y xorriso mtools dosfstools syslinux-utils
+          sudo apt-get install -y \
+            xorriso \
+            mtools \
+            dosfstools \
+            syslinux-utils \
+            qemu-system-x86 \
+            qemu-utils
+            
+      - name: Verify QEMU
+        run: |
+          qemu-system-x86_64 --version
+          qemu-img --version
 
       - name: Download base ISO and EFI image
         run: |
@@ -269,4 +280,3 @@ jobs:
           archive: false
           retention-days: 14
           if-no-files-found: error
-          
