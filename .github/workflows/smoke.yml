@@ -1,10 +1,12 @@
 name: E2E Tests
+
 on:
   pull_request:
   workflow_dispatch:
-    
+
 permissions:
   contents: write
+  packages: write
 
 jobs:
   test:
@@ -12,3 +14,4 @@ jobs:
     with:
       image: ghcr.io/butrejp/butrelinux-experimental:latest
       suites: kde-smoke,common,lifecycle,security,hardware
+      
