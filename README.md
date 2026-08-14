@@ -47,6 +47,8 @@ to rebase an existing EL10 based installation to the latest build:
 ```bash
 # optionally clean up default flatpaks
 flatpak uninstall --all
+```
+```bash
 # switch to the signed image and reboot:
 sudo bootc switch --enforce-container-sigpolicy ghcr.io/butrejp/butrelinux-< VARIANT >:latest --apply
 ```
