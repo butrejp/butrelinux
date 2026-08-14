@@ -8,6 +8,8 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 IMAGE="${IMAGE:-hwe}"
 ISO="${ISO:?ISO must point to the ISO being tested}"
 
+TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-1800}"
+
 RAM_MB="${RAM_MB:-6144}"
 CPUS="${CPUS:-4}"
 HTTP_PORT="${HTTP_PORT:-8080}"
