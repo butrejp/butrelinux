@@ -224,13 +224,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf xorriso qemu-utils
 
-      - name: Debug — list available artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "Looking for artifact: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}"
-          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].name'
-
       - name: Download ISO artifact
         uses: actions/download-artifact@v8
         with:
