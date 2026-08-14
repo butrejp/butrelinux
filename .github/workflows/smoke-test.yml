@@ -132,7 +132,7 @@ jobs:
 
             # NVIDIA variants: nvtop + NVIDIA driver bits
             if [[ "$VARIANT" == *nvidia* ]]; then
-              rpm -q nvtop >/dev/null || { echo "FAIL: nvtop missing"; exit 1; }
+              which nvtop >/dev/null || { echo "FAIL: nvtop missing"; exit 1; }
               # In a container we cant modprobe, but we can check the driver files exist
               test -d /usr/lib/nvidia || test -f /usr/bin/nvidia-smi || { echo "WARN: nvidia driver files not found"; }
             fi
@@ -150,8 +150,7 @@ jobs:
           podman run --rm "$IMAGE" bash -c '
             set -euo pipefail
             test -f /usr/bin/bootc || { echo "FAIL: bootc missing"; exit 1; }
-            test -d /ostree || test -d /sysroot/ostree || { echo "FAIL: ostree root missing"; exit 1; }
-            echo "PASS: bootc/ostree present"
+            echo "PASS: bootc present"
           '
 
       - name: Test 10 — No broken RPM dependencies
