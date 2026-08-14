@@ -303,7 +303,7 @@ jobs:
       - name: Download ISO artifact
         uses: actions/download-artifact@v8
         with:
-          name: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}
+          name: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}.iso
           path: ./iso
 
       - name: Create GitHub Release
@@ -315,4 +315,3 @@ jobs:
           generate_release_notes: true
           files: |
             ./iso/butrelinux-unified-${{ needs.build-iso.outputs.build_date }}.iso
-            
