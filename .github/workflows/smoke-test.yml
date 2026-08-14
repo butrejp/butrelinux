@@ -1,0 +1,170 @@
+name: Image smoke tests
+
+on:
+  workflow_run:
+    workflows: ["Build butrelinux images"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to test (e.g. ghcr.io/butrejp/butrelinux-hwe:latest)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: butrejp/butrelinux
+
+jobs:
+  smoke-test:
+    name: Smoke Test ${{ matrix.variant }}
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [hwe, nvidia, lto-hwe, lto-nvidia]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Pull image
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            IMAGE="${{ inputs.image_tag }}"
+          else
+            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.variant }}:latest"
+          fi
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          podman pull "$IMAGE"
+
+      - name: Test 1 — Image metadata & os-release
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            . /usr/lib/os-release
+            [[ "$NAME" == *"butrelinux"* ]] || { echo "FAIL: NAME does not contain butrelinux"; exit 1; }
+            [[ "$ID" == "centos" ]] || { echo "FAIL: ID is not centos"; exit 1; }
+            echo "PASS: os-release looks correct"
+          '
+
+      - name: Test 2 — image-info.json exists and is valid
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            test -f /usr/share/ublue-os/image-info.json || { echo "FAIL: image-info.json missing"; exit 1; }
+            jq -e ".image-name" /usr/share/ublue-os/image-info.json >/dev/null || { echo "FAIL: image-name missing"; exit 1; }
+            jq -e ".image-variant == \"${{ matrix.variant }}\"" /usr/share/ublue-os/image-info.json >/dev/null || { echo "FAIL: variant mismatch"; exit 1; }
+            echo "PASS: image-info.json valid"
+          '
+
+      - name: Test 3 — KDE Plasma installed, GNOME removed
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            # KDE present
+            rpm -q plasma-desktop >/dev/null || { echo "FAIL: plasma-desktop missing"; exit 1; }
+            rpm -q sddm >/dev/null || { echo "FAIL: sddm missing"; exit 1; }
+            rpm -q dolphin >/dev/null || { echo "FAIL: dolphin missing"; exit 1; }
+            rpm -q konsole >/dev/null || { echo "FAIL: konsole missing"; exit 1; }
+            rpm -q kate >/dev/null || { echo "FAIL: kate missing"; exit 1; }
+            # GNOME absent
+            rpm -q gnome-shell 2>/dev/null && { echo "FAIL: gnome-shell still installed"; exit 1; } || true
+            rpm -q gdm 2>/dev/null && { echo "FAIL: gdm still installed"; exit 1; } || true
+            rpm -q nautilus 2>/dev/null && { echo "FAIL: nautilus still installed"; exit 1; } || true
+            echo "PASS: KDE present, GNOME removed"
+          '
+
+      - name: Test 4 — SDDM enabled, GDM disabled
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            systemctl is-enabled sddm.service >/dev/null 2>&1 || { echo "FAIL: sddm not enabled"; exit 1; }
+            systemctl is-enabled gdm.service 2>/dev/null && { echo "FAIL: gdm still enabled"; exit 1; } || true
+            echo "PASS: display managers configured"
+          '
+
+      - name: Test 5 — Tuned services enabled
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            systemctl is-enabled tuned.service >/dev/null 2>&1 || { echo "FAIL: tuned not enabled"; exit 1; }
+            systemctl is-enabled tuned-ppd.service >/dev/null 2>&1 || { echo "FAIL: tuned-ppd not enabled"; exit 1; }
+            echo "PASS: tuned services enabled"
+          '
+
+      - name: Test 6 — Flatpak & portal support
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            rpm -q flatpak >/dev/null || { echo "FAIL: flatpak missing"; exit 1; }
+            rpm -q xdg-desktop-portal-kde >/dev/null || { echo "FAIL: xdg-desktop-portal-kde missing"; exit 1; }
+            echo "PASS: flatpak stack present"
+          '
+
+      - name: Test 7 — givemethekeys script executable
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            test -x /usr/bin/givemethekeys || { echo "FAIL: givemethekeys not executable"; exit 1; }
+            /usr/bin/givemethekeys help >/dev/null || { echo "FAIL: givemethekeys help failed"; exit 1; }
+            echo "PASS: givemethekeys works"
+          '
+
+      - name: Test 8 — Variant-specific checks
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            VARIANT="${{ matrix.variant }}"
+
+            # LTO variants: CachyOS kernel
+            if [[ "$VARIANT" == lto-* ]]; then
+              uname -r | grep -qi cachyos || { echo "FAIL: CachyOS kernel not running (check installed)"; exit 1; }
+              rpm -qa | grep -q cachyos || { echo "FAIL: cachyos kernel packages missing"; exit 1; }
+            fi
+
+            # NVIDIA variants: nvtop + NVIDIA driver bits
+            if [[ "$VARIANT" == *nvidia* ]]; then
+              rpm -q nvtop >/dev/null || { echo "FAIL: nvtop missing"; exit 1; }
+              # In a container we cant modprobe, but we can check the driver files exist
+              test -d /usr/lib/nvidia || test -f /usr/bin/nvidia-smi || { echo "WARN: nvidia driver files not found"; }
+            fi
+
+            # Non-LTO variants: stock kernel headers/tools should NOT be removed (they are removed in lto.yml)
+            if [[ "$VARIANT" != lto-* ]]; then
+              rpm -q kernel-headers >/dev/null || { echo "FAIL: kernel-headers missing on non-LTO"; exit 1; }
+            fi
+
+            echo "PASS: variant-specific checks OK"
+          '
+
+      - name: Test 9 — Bootc / ostree sanity
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            test -f /usr/bin/bootc || { echo "FAIL: bootc missing"; exit 1; }
+            test -d /ostree || test -d /sysroot/ostree || { echo "FAIL: ostree root missing"; exit 1; }
+            echo "PASS: bootc/ostree present"
+          '
+
+      - name: Test 10 — No broken RPM dependencies
+        run: |
+          podman run --rm "$IMAGE" bash -c '
+            set -euo pipefail
+            dnf repoquery --unsatisfied 2>/dev/null | tee /tmp/unsatisfied.txt
+            if [ -s /tmp/unsatisfied.txt ]; then
+              echo "FAIL: unsatisfied dependencies found"
+              exit 1
+            fi
+            echo "PASS: no broken RPM dependencies"
+          '
+
+      - name: Report
+        if: always()
+        run: echo "Smoke tests completed for ${{ matrix.variant }}"
