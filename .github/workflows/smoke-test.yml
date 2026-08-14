@@ -48,7 +48,7 @@ jobs:
         run: |
           podman run --rm "$IMAGE" bash -c '
             set -euo pipefail
-            . /usr/lib/os-release
+            . /etc/os-release
             [[ "$NAME" == *"butrelinux"* ]] || { echo "FAIL: NAME does not contain butrelinux"; exit 1; }
             [[ "$ID" == "centos" ]] || { echo "FAIL: ID is not centos"; exit 1; }
             echo "PASS: os-release looks correct"
