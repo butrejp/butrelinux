@@ -5,7 +5,7 @@ permissions:
 
 on:
   workflow_dispatch:
-  
+
 jobs:
   build-iso:
     runs-on: ubuntu-latest
@@ -85,12 +85,10 @@ jobs:
         run: |
           set -eu
           
-          # 1. Copy kickstarts to ISO root
           for image in $IMAGES; do
             cp "generated-kickstarts/${image}.cfg" "iso-root/${image}.cfg"
           done
           
-          # 2. Update GRUB configs for ISO-mode paths
           mkdir -p iso-root/EFI/BOOT iso-root/boot/grub2
           cp generated-grub.cfg iso-root/EFI/BOOT/grub.cfg
           cp generated-grub.cfg iso-root/EFI/BOOT/grub2.cfg || true
@@ -106,9 +104,6 @@ jobs:
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub.cfg
           mcopy -o -i /tmp/efiboot.img generated-grub.cfg ::/EFI/BOOT/grub2.cfg || true
           
-          # Also place the modified image into the ISO tree.
-          # This is NOT needed for DD booting, but some tools (Rufus ISO mode,
-          # manual file extraction) expect to find it inside the filesystem.
           mkdir -p iso-root/images
           cp /tmp/efiboot.img iso-root/images/efiboot.img
           
@@ -123,14 +118,13 @@ jobs:
           
           MKISOFS=(
             xorriso -as mkisofs
-            -r                          # Rock Ridge
-            -V "BUTRELINUX"             # Volume ID
-            -J                          # Joliet
-            -joliet-long                # Long Joliet names
-            -partition_offset 16          # Shift ISO fs so GPT partition 1 is mountable
+            -r
+            -V "BUTRELINUX"
+            -J
+            -joliet-long
+            -partition_offset 16
           )
           
-          # --- Legacy BIOS boot (if isolinux exists) ---
           if [ -f iso-root/isolinux/isolinux.bin ]; then
             echo "Adding BIOS boot support..."
             MKISOFS+=(
@@ -147,24 +141,15 @@ jobs:
             fi
           fi
           
-          # --- UEFI: Append modified EFI image as partition 2 (ESP) ---
-          # This creates a real ESP partition in the GPT for DD mode.
           MKISOFS+=(
             -append_partition 2 0xef /tmp/efiboot.img
             -appended_part_as_gpt
-          )
-          
-          # --- UEFI: El Torito points to the SAME appended partition ---
-          # This makes the ISO bootable on optical media too, using the
-          # identical EFI image that DD mode will use.
-          MKISOFS+=(
             -eltorito-alt-boot
             -e --interval:appended_partition_2:all::
             -no-emul-boot
+            -o "$iso_out"
+            iso-root/
           )
-          
-          # Output
-          MKISOFS+=(-o "$iso_out" iso-root/)
           
           echo "=== Building ISO ==="
           printf '%s\n' "${MKISOFS[*]}"
@@ -210,6 +195,19 @@ jobs:
             echo "WARNING: Could not extract partition 2 for verification"
           fi
 
+      - name: Upload ISO
+        uses: actions/upload-artifact@v7
+        with:
+          name: butrelinux-unified-${{ env.BUILD_DATE }}
+          path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Cleanup intermediate files
+        if: always()
+        run: rm -rf cs10-boot.iso cs10-efiboot.img iso-root /tmp/efiboot.img /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
+
   boot-test:
     name: Boot Test ${{ matrix.variant }}
     needs: build-iso
@@ -226,7 +224,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf xorriso qemu-utils
 
-      - name: Download ISO artifact (same workflow)
+      - name: Download ISO artifact
         uses: actions/download-artifact@v7
         with:
           name: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}
@@ -283,16 +281,7 @@ jobs:
           path: boot.log
           retention-days: 7
 
-      - name: Cleanup intermediate files
+      - name: Cleanup
         if: always()
-        run: rm -rf cs10-boot.iso cs10-efiboot.img iso-root /tmp/efiboot.img /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
-
-      - name: Upload ISO
-        uses: actions/upload-artifact@v7
-        with:
-          name: butrelinux-unified-${{ env.BUILD_DATE }}
-          path: ./results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
-          archive: false
-          retention-days: 14
-          if-no-files-found: error
-
+        run: rm -f test-disk.raw boot.log
+        
