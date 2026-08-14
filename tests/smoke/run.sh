@@ -241,49 +241,93 @@ sudo qemu-system-x86_64 \
     -nic "user,model=virtio-net-pci" \
     -serial "file:${QEMU_LOG}" \
     -display none \
+    -no-reboot \
     > "$QEMU_STDOUT_LOG" 2>&1 &
 
 QEMU_PID=$!
 
-echo "==> Waiting for installation and first boot"
+echo "==> Waiting for installation to complete"
 
-deadline=$((SECONDS + 1800))
-last_size=0
+deadline=$((SECONDS + TIMEOUT_SECONDS))
 
 while (( SECONDS < deadline )); do
-    if [[ -f "$QEMU_LOG" ]]; then
-        current_size="$(stat -c '%s' "$QEMU_LOG" 2>/dev/null || echo 0)"
+    if grep -q "Installation complete" "$QEMU_LOG" 2>/dev/null; then
+        echo "==> Anaconda reports installation complete"
+        break
+    fi
 
-        if (( current_size != last_size )); then
-            echo "--- QEMU serial output ---"
-            tail -40 "$QEMU_LOG" || true
-            echo "--------------------------"
+    if grep -q "BUTRELINUX_SMOKE_FAIL" "$QEMU_LOG" 2>/dev/null; then
+        echo "ERROR: installer reported smoke-test failure"
+        exit 1
+    fi
 
-            last_size="$current_size"
-        fi
+    if ! kill -0 "$QEMU_PID" 2>/dev/null; then
+        echo "ERROR: installer QEMU exited before installation completed"
+        exit 1
+    fi
 
-        if grep -q "BUTRELINUX_SMOKE_PASS" "$QEMU_LOG"; then
-            echo
-            echo "======================================"
-            echo "butrelinux smoke test PASSED"
-            echo "======================================"
+    sleep 5
+done
 
-            exit 0
-        fi
+if ! grep -q "Installation complete" "$QEMU_LOG" 2>/dev/null; then
+    echo "ERROR: installation timed out"
+    exit 1
+fi
 
-        if grep -q "BUTRELINUX_SMOKE_FAIL" "$QEMU_LOG"; then
-            echo
-            echo "======================================"
-            echo "butrelinux smoke test FAILED"
-            echo "======================================"
+echo "==> Waiting for installer QEMU to exit"
 
-            exit 1
-        fi
+while kill -0 "$QEMU_PID" 2>/dev/null; do
+    sleep 1
+done
+
+wait "$QEMU_PID" || true
+
+QEMU_PID=""
+
+echo "==> Installer VM has stopped"
+
+echo "==> Booting installed system"
+
+sudo qemu-system-x86_64 \
+    -machine q35,accel=kvm:tcg \
+    -cpu max \
+    -m "$RAM_MB" \
+    -smp "$CPUS" \
+    -drive "file=${DISK},if=virtio,format=qcow2" \
+    -nic "user,model=virtio-net-pci" \
+    -serial "file:${QEMU_LOG}" \
+    -display none \
+    -no-reboot \
+    > "$QEMU_STDOUT_LOG" 2>&1 &
+
+QEMU_PID=$!
+
+echo "==> Waiting for installed system smoke test"
+
+deadline=$((SECONDS + TIMEOUT_SECONDS))
+
+while (( SECONDS < deadline )); do
+    if grep -q "BUTRELINUX_SMOKE_PASS" "$QEMU_LOG" 2>/dev/null; then
+        echo
+        echo "======================================"
+        echo "butrelinux smoke test PASSED"
+        echo "======================================"
+
+        exit 0
+    fi
+
+    if grep -q "BUTRELINUX_SMOKE_FAIL" "$QEMU_LOG" 2>/dev/null; then
+        echo
+        echo "======================================"
+        echo "butrelinux smoke test FAILED"
+        echo "======================================"
+
+        exit 1
     fi
 
     if ! kill -0 "$QEMU_PID" 2>/dev/null; then
         echo
-        echo "ERROR: QEMU exited before reporting a smoke result"
+        echo "ERROR: installed-system QEMU exited before reporting a smoke result"
         exit 1
     fi
 
@@ -291,6 +335,6 @@ while (( SECONDS < deadline )); do
 done
 
 echo
-echo "ERROR: smoke test timed out"
+echo "ERROR: installed-system smoke test timed out"
 
 exit 1
