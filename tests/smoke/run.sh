@@ -199,6 +199,21 @@ qemu-img create \
     "$DISK" \
     32G
 
+
+echo "==> Checking KVM access"
+
+if [[ -e /dev/kvm ]]; then
+    ls -l /dev/kvm
+
+    if sudo test -r /dev/kvm && sudo test -w /dev/kvm; then
+        echo "KVM device is accessible via sudo"
+    else
+        echo "WARNING: /dev/kvm exists but is not accessible via sudo"
+    fi
+else
+    echo "WARNING: /dev/kvm does not exist"
+fi
+
 #
 # Boot the Anaconda installer.
 #
@@ -213,7 +228,7 @@ qemu-img create \
 
 echo "==> Starting QEMU installer"
 
-qemu-system-x86_64 \
+sudo qemu-system-x86_64 \
     -machine q35,accel=kvm:tcg \
     -cpu max \
     -m "$RAM_MB" \
