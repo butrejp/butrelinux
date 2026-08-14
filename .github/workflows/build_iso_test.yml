@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build_date: ${{ env.BUILD_DATE }}
-      
+
     env:
       IMAGES: "hwe nvidia lto-hwe lto-nvidia"
       MIRROR: "https://mirror.stream.centos.org/10-stream/BaseOS/x86_64/os"
@@ -219,7 +219,7 @@ jobs:
       matrix:
         variant: [hwe, nvidia, lto-hwe, lto-nvidia]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install QEMU tools
         run: |
@@ -227,7 +227,7 @@ jobs:
           sudo apt-get install -y qemu-system-x86 ovmf xorriso qemu-utils
 
       - name: Download ISO artifact (same workflow)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}
           path: ./iso
@@ -277,7 +277,7 @@ jobs:
 
       - name: Upload boot log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: boot-log-${{ matrix.variant }}
           path: boot.log
