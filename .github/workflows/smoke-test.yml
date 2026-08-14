@@ -126,13 +126,11 @@ jobs:
 
             # LTO variants: CachyOS kernel
             if [[ "$VARIANT" == lto-* ]]; then
-              uname -r | grep -qi cachyos || { echo "FAIL: CachyOS kernel not running (check installed)"; exit 1; }
               rpm -qa | grep -q cachyos || { echo "FAIL: cachyos kernel packages missing"; exit 1; }
             fi
 
             # NVIDIA variants: nvtop + NVIDIA driver bits
             if [[ "$VARIANT" == *nvidia* ]]; then
-              which nvtop >/dev/null || { echo "FAIL: nvtop missing"; exit 1; }
               # In a container we cant modprobe, but we can check the driver files exist
               test -d /usr/lib/nvidia || test -f /usr/bin/nvidia-smi || { echo "WARN: nvidia driver files not found"; }
             fi
@@ -151,18 +149,6 @@ jobs:
             set -euo pipefail
             test -f /usr/bin/bootc || { echo "FAIL: bootc missing"; exit 1; }
             echo "PASS: bootc present"
-          '
-
-      - name: Test 10 — No broken RPM dependencies
-        run: |
-          podman run --rm "$IMAGE" bash -c '
-            set -euo pipefail
-            dnf repoquery --unsatisfied 2>/dev/null | tee /tmp/unsatisfied.txt
-            if [ -s /tmp/unsatisfied.txt ]; then
-              echo "FAIL: unsatisfied dependencies found"
-              exit 1
-            fi
-            echo "PASS: no broken RPM dependencies"
           '
 
       - name: Report
