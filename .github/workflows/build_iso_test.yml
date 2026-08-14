@@ -195,7 +195,7 @@ jobs:
             echo "WARNING: Could not extract partition 2 for verification"
           fi
 
-      - name: Upload ISO
+      - name: Upload ISO artifact
         uses: actions/upload-artifact@v7
         with:
           name: butrelinux-unified-${{ env.BUILD_DATE }}
@@ -223,6 +223,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf xorriso qemu-utils
+
+      - name: Debug — list available artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Looking for artifact: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}"
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].name'
 
       - name: Download ISO artifact
         uses: actions/download-artifact@v7
@@ -284,4 +291,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: rm -f test-disk.raw boot.log
-        
