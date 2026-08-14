@@ -26,11 +26,11 @@ Options:
   -y, --yes    Skip confirmation prompt (unlock only)
 ```
 </details>
-the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  
 
 ## installation  
 ISO downloads available here:  
 [![Download butrelinux](https://a.fsdn.com/con/app/sf-download-button)](https://butrelinux.sourceforge.io/)  
+the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  
 
 ### rebase instructions 
 
