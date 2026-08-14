@@ -50,7 +50,7 @@ jobs:
             set -euo pipefail
             . /usr/lib/os-release
             [[ "$NAME" == *"butrelinux"* ]] || { echo "FAIL: NAME does not contain butrelinux"; exit 1; }
-            [[ "$ID" == "centos rhel fedora" ]] || { echo "FAIL: ID is not centos"; exit 1; }
+            [[ "$ID_LIKE" == "centos rhel fedora" ]] || { echo "FAIL: ID_LIKE is not centos"; exit 1; }
             echo "PASS: os-release looks correct"
           '
 
