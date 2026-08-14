@@ -241,7 +241,6 @@ sudo qemu-system-x86_64 \
     -nic "user,model=virtio-net-pci" \
     -serial "file:${QEMU_LOG}" \
     -display none \
-    -no-reboot \
     > "$QEMU_STDOUT_LOG" 2>&1 &
 
 QEMU_PID=$!
