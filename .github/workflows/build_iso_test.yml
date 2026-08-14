@@ -232,9 +232,9 @@ jobs:
           gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].name'
 
       - name: Download ISO artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
-          name: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}
+          name: butrelinux-unified-${{ needs.build-iso.outputs.build_date }}.iso
           path: ./iso
 
       - name: Locate ISO
