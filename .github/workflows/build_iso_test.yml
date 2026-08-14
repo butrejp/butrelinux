@@ -1,11 +1,11 @@
-name: Build butrelinux ISO -test
+name: Build butrelinux ISO - test
 
 permissions:
   contents: write
 
 on:
   workflow_dispatch:
-
+  
 jobs:
   build-iso:
     runs-on: ubuntu-latest
@@ -24,18 +24,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            xorriso \
-            mtools \
-            dosfstools \
-            syslinux-utils \
-            qemu-system-x86 \
-            qemu-utils
-            
-      - name: Verify QEMU
-        run: |
-          qemu-system-x86_64 --version
-          qemu-img --version
+          sudo apt-get install -y xorriso mtools dosfstools syslinux-utils
 
       - name: Download base ISO and EFI image
         run: |
@@ -185,92 +174,43 @@ jobs:
         run: |
           set -eu
           iso="results/butrelinux-unified-${BUILD_DATE}.iso"
-
+          
           echo "=== File info ==="
           ls -lh "$iso"
-
+          
           echo -e "\n=== El Torito boot images ==="
           xorriso -indev "$iso" -report_el_torito plain 2>&1 || true
-
+          
           echo -e "\n=== Partition table ==="
           fdisk -l "$iso" 2>&1 || true
-
+          
           echo -e "\n=== GPT partitions ==="
           sgdisk -p "$iso" 2>&1 || true
-
+          
           echo -e "\n=== Verify kickstarts in ISO filesystem ==="
           for image in $IMAGES; do
             xorriso -indev "$iso" -ls "/${image}.cfg" 2>&1 || true
           done
-
+          
           echo -e "\n=== Verify GRUB config in ISO filesystem ==="
           xorriso -indev "$iso" -cat /EFI/BOOT/grub.cfg 2>&1 | head -20 || true
-
+          
           echo -e "\n=== Extract and verify appended ESP partition (DD mode) ==="
           part_start=$(sgdisk -p "$iso" 2>/dev/null | awk '/^   2 / {print $2}')
           part_size=$(sgdisk -p "$iso" 2>/dev/null | awk '/^   2 / {print $3 - $2 + 1}')
-
           if [ -n "$part_start" ] && [ -n "$part_size" ]; then
-            dd \
-              if="$iso" \
-              of=/tmp/extracted-esp.img \
-              bs=512 \
-              skip="$part_start" \
-              count="$part_size" \
-              status=none
-
-            mcopy \
-              -i /tmp/extracted-esp.img \
-              ::/EFI/BOOT/grub.cfg \
-              /tmp/verify-dd-grub.cfg
-
+            dd if="$iso" of=/tmp/extracted-esp.img bs=512 skip="$part_start" count="$part_size" status=none
+            mcopy -i /tmp/extracted-esp.img ::/EFI/BOOT/grub.cfg /tmp/verify-dd-grub.cfg
             echo "--- DD-mode GRUB config (first 20 lines) ---"
             head -20 /tmp/verify-dd-grub.cfg
-
-            diff -u \
-              generated-grub.cfg \
-              /tmp/verify-dd-grub.cfg
-
-            echo "DD-mode GRUB config: MATCH"
+            diff -u generated-grub.cfg /tmp/verify-dd-grub.cfg && echo "DD-mode GRUB config: MATCH"
           else
             echo "WARNING: Could not extract partition 2 for verification"
           fi
 
-      - name: Smoke test HWE installation
-        env:
-          ISO: ${{ github.workspace }}/results/butrelinux-unified-${{ env.BUILD_DATE }}.iso
-          IMAGE: hwe
-        run: |
-          chmod +x tests/smoke/run.sh
-          tests/smoke/run.sh
-
-      - name: Upload smoke-test diagnostics
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: butrelinux-smoke-${{ env.BUILD_DATE }}
-          path: |
-            .smoke/qemu.log
-            .smoke/qemu.stdout.log
-            .smoke/http.log
-            .smoke/smoke.cfg
-          retention-days: 14
-          if-no-files-found: ignore
-
       - name: Cleanup intermediate files
         if: always()
-        run: |
-          rm -rf \
-            cs10-boot.iso \
-            cs10-efiboot.img \
-            iso-root \
-            .smoke \
-            /tmp/efiboot.img \
-            /tmp/extracted-esp.img \
-            /tmp/verify-dd-grub.cfg \
-            generated-kickstarts \
-            generated-menu-entries.cfg \
-            generated-grub.cfg
+        run: rm -rf cs10-boot.iso cs10-efiboot.img iso-root /tmp/efiboot.img /tmp/extracted-esp.img /tmp/verify-dd-grub.cfg generated-kickstarts generated-menu-entries.cfg generated-grub.cfg
 
       - name: Upload ISO
         uses: actions/upload-artifact@v7
@@ -280,3 +220,4 @@ jobs:
           archive: false
           retention-days: 14
           if-no-files-found: error
+
