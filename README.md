@@ -47,7 +47,7 @@ to rebase an existing EL10 based installation to the latest build:
 ```bash
 # optionally clean up default flatpaks
 flatpak uninstall --all
-# rebase to the unsigned image, to get the proper signing keys and policies installed:
+# switch to the signed image and reboot:
 sudo bootc switch --enforce-container-sigpolicy ghcr.io/butrejp/butrelinux-< VARIANT >:latest --apply
 ```
 after the system reboots:
@@ -65,10 +65,11 @@ mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
 
 these images are signed with sigstore's cosign. you can verify the signature by downloading the cosign.pub file from this repo and running the following command:  
 ```
-cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux
+cosign verify --key cosign.pub ghcr.io/butrejp/butrelinux-< VARIANT >
 ```
 if you ever hit ASN.1 invalid signature failure during an upgrade it's because I rotated out the keys.  sorry.  it was probably dependabot's fault.  you can fetch the new keys with the following command
 ```
 sudo curl -Lo /etc/pki/containers/butrelinux.pub https://raw.githubusercontent.com/butrejp/butrelinux/refs/heads/main/cosign.pub
 ```
+this shouldn't ever be an issue, but it's worth documenting.
 </details>
