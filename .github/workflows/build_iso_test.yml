@@ -249,15 +249,18 @@ jobs:
         run: |
           set +e
           timeout 120 qemu-system-x86_64 \
-            -m 4096 -smp 2 -cpu qemu64 -nographic \
-            -bios /usr/share/ovmf/OVMF.fd \
+            -machine q35 \
+            -m 4096 \
+            -smp 2 \
+            -cpu qemu64 \
+            -nographic \
+            -no-reboot \
             -cdrom "$ISO" \
             -drive file=test-disk.raw,format=raw,if=virtio \
             -kernel pxeboot/vmlinuz \
             -initrd pxeboot/initrd.img \
             -append "inst.stage2=hd:LABEL=BUTRELINUX inst.ks=hd:LABEL=BUTRELINUX:/${{ matrix.variant }}.cfg console=ttyS0,115200n8 inst.noverifssl rd.live.ram=1" \
             2>&1 | tee boot.log
-          set -e
 
       - name: Analyze boot log
         run: |
