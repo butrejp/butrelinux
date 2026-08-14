@@ -9,6 +9,10 @@ local package layering is disabled by default.  you can change this with the com
 ```bash
 sudo givemethekeys unlock
 ```
+
+<details>
+    <summary>givemethekeys usage</summary> 
+
 ```
 Usage: givemethekeys <command> [options]
 
@@ -21,6 +25,7 @@ Commands:
 Options:
   -y, --yes    Skip confirmation prompt (unlock only)
 ```
+</details>
 the ISO is the main installation path, rebase instructions are provided for convenience for existing bluefin lts users.  
 
 ## installation  
@@ -28,6 +33,9 @@ ISO downloads available here:
 [![Download butrelinux](https://a.fsdn.com/con/app/sf-download-button)](https://butrelinux.sourceforge.io/)  
 
 ### rebase instructions 
+
+<details>
+    <summary>rebase instructions</summary> 
 
 if you use the rebase instructions you must rebase from a centos stream derived image such as bluefin-lts, not any fedora version.  this image is based on centos stream 10, not fedora, and cross-rebasing will break things.  
 
@@ -48,8 +56,12 @@ after the system reboots:
 # or just make your own config.  I'm not your mom.
 mkdir -p ~/.config && cp -r /etc/skel/.config/* ~/.config/
 ```
+</details>
 
 ### verification
+
+<details>
+    <summary>verification</summary> 
 
 these images are signed with sigstore's cosign. you can verify the signature by downloading the cosign.pub file from this repo and running the following command:  
 ```
@@ -59,3 +71,4 @@ if you ever hit ASN.1 invalid signature failure during an upgrade it's because I
 ```
 sudo curl -Lo /etc/pki/containers/butrelinux.pub https://raw.githubusercontent.com/butrejp/butrelinux/refs/heads/main/cosign.pub
 ```
+</details>
