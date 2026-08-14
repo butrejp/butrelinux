@@ -243,24 +243,31 @@ jobs:
           file pxeboot/vmlinuz pxeboot/initrd.img
 
       - name: Create test disk
-        run: qemu-img create -f raw test-disk.raw 10G
+        run: qemu-img create -f qcow2 test-disk.qcow2 20G
 
       - name: Boot ${{ matrix.variant }} in QEMU
         run: |
           set +e
           timeout 120 qemu-system-x86_64 \
-            -machine q35 \
-            -m 4096 \
-            -smp 2 \
-            -cpu qemu64 \
-            -nographic \
-            -no-reboot \
-            -cdrom "$ISO" \
-            -drive file=test-disk.raw,format=raw,if=virtio \
+            -machine q35,accel=kvm:tcg \
+            -cpu max \
+            -m 6144 \
+            -smp 4 \
+            -drive "file=test-disk.qcow2,if=virtio,format=qcow2" \
+            -drive "file=$ISO,media=cdrom,readonly=on" \
             -kernel pxeboot/vmlinuz \
             -initrd pxeboot/initrd.img \
-            -append "inst.stage2=hd:LABEL=BUTRELINUX inst.ks=hd:LABEL=BUTRELINUX:/${{ matrix.variant }}.cfg console=ttyS0,115200n8 inst.noverifssl rd.live.ram=1" \
+            -append "inst.stage2=hd:LABEL=BUTRELINUX inst.ks=hd:LABEL=BUTRELINUX:/${{ matrix.variant }}.cfg inst.ksstrict inst.noninteractive console=tty0 console=ttyS0 inst.noverifssl rd.live.ram=1" \
+            -nic "user,model=virtio-net-pci" \
+            -nographic \
+            -no-reboot \
             2>&1 | tee boot.log
+          QEMU_EXIT=$?
+          set -e
+
+          if [ $QEMU_EXIT -ne 0 ] && [ $QEMU_EXIT -ne 124 ]; then
+            echo "WARNING: QEMU exited with code $QEMU_EXIT"
+          fi
 
       - name: Analyze boot log
         run: |
@@ -286,4 +293,5 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: rm -f test-disk.raw boot.log
+        run: rm -f test-disk.qcow2 boot.log
+        
