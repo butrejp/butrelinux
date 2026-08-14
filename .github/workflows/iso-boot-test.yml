@@ -1,0 +1,110 @@
+name: ISO Boot Test
+
+on:
+  workflow_run:
+    workflows: ["Build butrelinux ISO", "Build butrelinux ISO - test"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      artifact_name:
+        description: 'ISO artifact name (e.g. butrelinux-unified-20260101)'
+        required: true
+        type: string
+
+jobs:
+  boot-test:
+    name: Boot Test ${{ matrix.variant }}
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [hwe, nvidia, lto-hwe, lto-nvidia]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install QEMU tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 ovmf xorriso qemu-utils
+
+      - name: Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: ${{ github.event_name == 'workflow_dispatch' && inputs.artifact_name || 'butrelinux-unified-*' }}
+          merge-multiple: true
+          path: ./iso
+
+      - name: Locate ISO
+        run: |
+          ISO=$(find ./iso -name "*.iso" | head -n1)
+          if [ -z "$ISO" ]; then
+            echo "FAIL: No ISO found in artifact"
+            exit 1
+          fi
+          echo "ISO=$ISO" >> "$GITHUB_ENV"
+          ls -lh "$ISO"
+
+      - name: Extract kernel & initrd from ISO
+        run: |
+          mkdir -p pxeboot
+          xorriso -osirrox on -indev "$ISO" -extract /images/pxeboot pxeboot/
+          ls -la pxeboot/
+          file pxeboot/vmlinuz pxeboot/initrd.img
+
+      - name: Create test disk
+        run: qemu-img create -f raw test-disk.raw 10G
+
+      - name: Boot variant ${{ matrix.variant }} in QEMU
+        run: |
+          set +e
+          timeout 120 qemu-system-x86_64 \
+            -m 4096 \
+            -smp 2 \
+            -cpu qemu64 \
+            -nographic \
+            -bios /usr/share/ovmf/OVMF.fd \
+            -cdrom "$ISO" \
+            -drive file=test-disk.raw,format=raw,if=virtio \
+            -kernel pxeboot/vmlinuz \
+            -initrd pxeboot/initrd.img \
+            -append "inst.stage2=hd:LABEL=BUTRELINUX inst.ks=hd:LABEL=BUTRELINUX:/${{ matrix.variant }}.cfg console=ttyS0,115200n8 inst.noverifssl rd.live.ram=1" \
+            2>&1 | tee boot.log
+          QEMU_EXIT=$?
+          set -e
+
+          # timeout returns 124 if it fired, 0 if QEMU exited on its own
+          if [ $QEMU_EXIT -ne 0 ] && [ $QEMU_EXIT -ne 124 ]; then
+            echo "WARNING: QEMU exited with code $QEMU_EXIT"
+          fi
+
+      - name: Analyze boot log
+        run: |
+          echo "=== Boot log (last 200 lines) ==="
+          tail -n 200 boot.log
+
+          # Fail on critical errors
+          if grep -qiE "kernel panic|VFS:.*unable to mount root|error: file .*not found|grub rescue>" boot.log; then
+            echo "FAIL: Critical boot error detected"
+            exit 1
+          fi
+
+          # Pass if we see installer/dracut activity
+          if grep -qE "dracut:|Starting installer|anaconda|Reached target .*Network" boot.log; then
+            echo "PASS: Boot sequence looks healthy for ${{ matrix.variant }}"
+          else
+            echo "FAIL: No boot success indicators found"
+            exit 1
+          fi
+
+      - name: Upload boot log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boot-log-${{ matrix.variant }}
+          path: boot.log
+          retention-days: 7
+          
