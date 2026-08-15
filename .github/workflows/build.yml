@@ -25,6 +25,7 @@ jobs:
           - nvidia.yml
           - lto-hwe.yml
           - lto-nvidia.yml
+          - extras.yml
           
     steps:
       # the build is fully handled by the reusable github action

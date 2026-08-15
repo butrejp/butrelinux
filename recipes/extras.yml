@@ -1,0 +1,38 @@
+
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: butrelinux-extras
+
+description: butrelinux extras container image
+# for distrobox consumption only
+base-image: quay.io/fedora/fedora-minimal
+image-version: 44
+
+modules:
+  - type: containerfile
+    snippets:
+      - RUN microdnf install -y dnf5 && dnf5 clean all
+  - type: dnf
+    repos:
+      nonfree: rpmfusion
+      files:
+        - https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
+    install:
+      install-weak-deps: false
+      packages:
+      - steam
+      - mangohud
+      - gamemode
+      - gamescope
+      - vkBasalt
+      - vulkan-tools
+      - codium
+      - desktop-plus-bin
+      - neovim
+      - vesktop
+      - fluxer
+      - signal-desktop
+      - nheko
+      - obs-studio
+      - vlc
+
+# signing is omitted because distrobox ignores signatures anyway
