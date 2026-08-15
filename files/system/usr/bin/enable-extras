@@ -50,6 +50,9 @@ distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
         distrobox-export --app "$app"
     done
 '
+distrobox enter "$CONTAINER_NAME" --no-tty -- sudo ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/xdg-open
+distrobox enter "$CONTAINER_NAME" --no-tty -- sudo ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/flatpak
+
 cat << EOF >> ~/.bash_profile
 command_not_found_handle() {
 # don't run if not in a container
