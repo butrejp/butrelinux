@@ -11,11 +11,13 @@ modules:
   - type: containerfile
     snippets:
       - RUN microdnf install -y dnf5 dnf5-plugins && dnf5 clean all
+  - type: script
+    snippets:
+      - dnf5 install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys
+      - dnf5 makecache
   - type: dnf
     repos:
       nonfree: rpmfusion
-      files:
-        - https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
     install:
       install-weak-deps: false
       packages:
@@ -36,5 +38,10 @@ modules:
       - vlc
       - firefox
       - firefox-langpacks
+      
+  - type: script
+    snippets:
+      - dnf5 clean all
+
 
   - type: signing
