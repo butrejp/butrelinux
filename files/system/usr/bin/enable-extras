@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# this is only tested against podman-backed installations.  it probably works elsewhere too though
+
 set -Eeuo pipefail
 IFS=$'\n\t'
 
