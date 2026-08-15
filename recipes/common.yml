@@ -86,6 +86,7 @@ modules:
         - btop
         - htop
         - xdg-desktop-portal-kde
+        - firefox
         - powerdevil
         - tuned
         - tuned-ppd
