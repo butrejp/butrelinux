@@ -30,6 +30,7 @@ distrobox_args=(
     --name "$CONTAINER_NAME"
     --image "$IMAGE"
     --yes
+    --no-entry
 )
 
 if [[ -r "$IMAGE_INFO" ]] &&
@@ -53,18 +54,19 @@ distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
 distrobox enter "$CONTAINER_NAME" --no-tty -- sudo ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/xdg-open
 distrobox enter "$CONTAINER_NAME" --no-tty -- sudo ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/flatpak
 
-distrobox enter "$CONTAINER_NAME" --no-tty -- sudo cat << EOF >> /etc/profile
+distrobox enter "$CONTAINER_NAME" --no-tty -- sudo sh -c 'cat >> /etc/profile.d/cnfhandle.sh' <<'EOF'
 command_not_found_handle() {
-# don't run if not in a container
+  # don't run if not in a container
   if [ ! -e /run/.containerenv ] && [ ! -e /.dockerenv ]; then
     exit 127
   fi
-  
+
   distrobox-host-exec "${@}"
 }
+
 if [ -n "${ZSH_VERSION-}" ]; then
   command_not_found_handler() {
     command_not_found_handle "$@"
- }
+  }
 fi
 EOF
