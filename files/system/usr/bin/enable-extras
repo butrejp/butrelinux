@@ -1,0 +1,29 @@
+#!/bin/bash
+
+while true; do
+    read -rp "This feature is currently in beta, would you like to continue? (y/n): " yn
+    case $yn in
+        [Yy]* ) 
+            echo "Setting up butrelinux extras"
+            break
+            ;;
+        [Nn]* ) 
+            echo "Operation canceled by user"
+            exit 0
+            ;;
+        * ) 
+            echo "Invalid response. Please enter y or n"
+            ;;
+    esac
+done
+
+distrobox create \
+    --name extras \
+    --image ghcr.io/butrejp/butrelinux-extras:latest \
+    --yes
+# shellcheck disable=SC2016
+distrobox enter extras -- bash -c '
+    for app in /usr/share/applications/*.desktop ~/.local/share/applications/*.desktop; do
+        [ -e "$app" ] && distrobox-export --app "$(basename "$app" .desktop)"
+    done
+'

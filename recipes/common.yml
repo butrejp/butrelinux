@@ -9,6 +9,7 @@ modules:
     snippets:
       - dnf config-manager --set-enabled crb
       - chmod +x /usr/bin/givemethekeys
+      - chmod +x /usr/bin/enable-extras
 
   - type: dnf
     remove:
