@@ -10,11 +10,12 @@ image-version: 44
 modules:
   - type: containerfile
     snippets:
-      - RUN microdnf install -y dnf5 && dnf5 clean all
-      - RUN dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra44' terra-release terra-gpg-keys -y
+      - RUN microdnf install -y dnf5 dnf5-plugins && dnf5 clean all
   - type: dnf
     repos:
       nonfree: rpmfusion
+      files:
+        - https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
     install:
       install-weak-deps: false
       packages:
