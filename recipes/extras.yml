@@ -11,7 +11,7 @@ modules:
   - type: containerfile
     snippets:
       - RUN microdnf install -y dnf5 && dnf5 clean all
-      - RUN dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release -y
+      - RUN dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra44' terra-release terra-gpg-keys -y
   - type: dnf
     repos:
       nonfree: rpmfusion
