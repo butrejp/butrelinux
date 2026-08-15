@@ -11,18 +11,17 @@ modules:
   - type: containerfile
     snippets:
       - RUN microdnf install -y dnf5 && dnf5 clean all
+      - RUN sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
   - type: dnf
     repos:
       nonfree: rpmfusion
-      files:
-        - https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
     install:
       install-weak-deps: false
       packages:
       - steam
       - mangohud
       - gamemode
-      - gamescope
+      # - gamescope  #gamescope is STILL busted in a container.  get your shit together valve
       - vkBasalt
       - vulkan-tools
       - codium
@@ -34,5 +33,7 @@ modules:
       - nheko
       - obs-studio
       - vlc
+      - firefox
+      - firefox-langpacks
 
   - type: signing
