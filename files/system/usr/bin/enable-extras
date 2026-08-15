@@ -1,29 +1,52 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+readonly CONTAINER_NAME="extras"
+readonly IMAGE="ghcr.io/butrejp/butrelinux-extras:latest"
+readonly IMAGE_INFO="/usr/share/ublue-os/image-info.json"
 
 while true; do
-    read -rp "This feature is currently in beta, would you like to continue? (y/n): " yn
-    case $yn in
-        [Yy]* ) 
+    read -r -p "This feature is currently in beta, would you like to continue? (y/n): " yn
+
+    case "$yn" in
+        [Yy])
             echo "Setting up butrelinux extras"
             break
             ;;
-        [Nn]* ) 
+        [Nn])
             echo "Operation canceled by user"
             exit 0
             ;;
-        * ) 
+        *)
             echo "Invalid response. Please enter y or n"
             ;;
     esac
 done
 
-distrobox create \
-    --name extras \
-    --image ghcr.io/butrejp/butrelinux-extras:latest \
+distrobox_args=(
+    create
+    --name "$CONTAINER_NAME"
+    --image "$IMAGE"
     --yes
+)
+
+if [[ -r "$IMAGE_INFO" ]] &&
+   jq -e -r '.["image-name"] // empty | test("nvidia"; "i")' \
+      "$IMAGE_INFO" >/dev/null; then
+    distrobox_args+=(--nvidia)
+fi
+
+distrobox "${distrobox_args[@]}"
+
 # shellcheck disable=SC2016
-distrobox enter extras -- bash -c '
-    for app in /usr/share/applications/*.desktop ~/.local/share/applications/*.desktop; do
-        [ -e "$app" ] && distrobox-export --app "$(basename "$app" .desktop)"
+distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
+    set -Eeuo pipefail
+    shopt -s nullglob
+
+    for app in /usr/share/applications/*.desktop "$HOME"/.local/share/applications/*.desktop; do
+        [[ -e "$app" ]] || continue
+        distrobox-export --app "$app"
     done
 '
