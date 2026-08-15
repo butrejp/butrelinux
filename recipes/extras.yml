@@ -13,7 +13,7 @@ modules:
       - RUN microdnf install -y dnf5 dnf5-plugins && dnf5 clean all
   - type: script
     snippets:
-      - dnf5 install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys
+      - dnf5 install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
       - dnf5 makecache
   - type: dnf
     repos:
@@ -38,7 +38,7 @@ modules:
       - vlc
       - firefox
       - firefox-langpacks
-      
+
   - type: script
     snippets:
       - dnf5 clean all
