@@ -22,7 +22,6 @@ jobs:
       matrix:
         recipe:
           - experimental.yml
-          - extras.yml
 
 
     steps:

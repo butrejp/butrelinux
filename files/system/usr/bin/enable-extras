@@ -1,74 +1,353 @@
 #!/usr/bin/env bash
 
-# this is only tested against podman-backed installations.  it probably works elsewhere too though
-
 set -Eeuo pipefail
 IFS=$'\n\t'
 
 readonly CONTAINER_NAME="extras"
-readonly IMAGE="ghcr.io/butrejp/butrelinux-extras:latest"
+readonly BASE_IMAGE="quay.io/fedora/fedora-minimal:44"
 readonly IMAGE_INFO="/usr/share/ublue-os/image-info.json"
 
-while true; do
-    read -r -p "This feature is currently in beta, would you like to continue? (y/n): " yn
+# ---------------------------------------------------------------------------
+# Package catalog
+#
+# tag                 description                 default
+# ---------------------------------------------------------------------------
 
-    case "$yn" in
-        [Yy])
-            echo "Setting up butrelinux extras"
-            break
-            ;;
-        [Nn])
-            echo "Operation canceled by user"
-            exit 0
-            ;;
-        *)
-            echo "Invalid response. Please enter y or n"
-            ;;
-    esac
-done
+PACKAGE_ITEMS=(
+    steam               "Steam"                    OFF
+    mangohud            "MangoHud"                 OFF
+    gamemode            "GameMode"                 OFF
+    vkBasalt            "vkBasalt"                 OFF
+    vulkan-tools        "Vulkan tools"             OFF
 
-distrobox_args=(
-    create
-    --name "$CONTAINER_NAME"
-    --image "$IMAGE"
-    --yes
-    --no-entry
+    codium              "VSCodium"                 OFF
+    neovim              "Neovim"                   OFF
+    desktop-plus-bin    "Github Desktop Plus"      OFF
+	
+    vesktop             "Vesktop"                  OFF
+    fluxer              "Fluxer"                   OFF
+    signal-desktop      "Signal Desktop"           OFF
+    nheko               "Nheko"                    OFF
+
+    obs-studio          "OBS Studio"               OFF
+    vlc                 "VLC"                      OFF
+    krita               "Krita"                    OFF
+    gimp                "GIMP"                     OFF
+    inkscape            "Inkscape"                 OFF
+    blender             "Blender"                  OFF
+    kdenlive            "Kdenlive"                 OFF
+    
+    firefox             "Firefox"                  OFF
+    firefox-langpacks   "Firefox language packs"   OFF
+    thunderbird         "Thunderbird"              OFF
+    chromium            "Chromium"                 OFF
+    qbittorrent         "qBitTorrent"              OFF
+    filezilla           "FileZilla"                OFF
+    
+
 )
 
-if [[ -r "$IMAGE_INFO" ]] &&
-   jq -e -r '.["image-name"] // empty | test("nvidia"; "i")' \
-      "$IMAGE_INFO" >/dev/null; then
-    distrobox_args+=(--nvidia)
-fi
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-distrobox "${distrobox_args[@]}"
+die() {
+    echo "error: $*" >&2
+    exit 1
+}
 
-# shellcheck disable=SC2016
-distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
-    set -Eeuo pipefail
-    shopt -s nullglob
+cleanup() {
+    if [[ -n "${BUILD_DIR:-}" && -d "$BUILD_DIR" ]]; then
+        rm -rf "$BUILD_DIR"
+    fi
+}
 
-    for app in /usr/share/applications/*.desktop "$HOME"/.local/share/applications/*.desktop; do
-        [[ -e "$app" ]] || continue
-        distrobox-export --app "$app"
+trap cleanup EXIT
+
+# ---------------------------------------------------------------------------
+# Beta warning
+# ---------------------------------------------------------------------------
+
+confirm_beta() {
+    while true; do
+        read -r -p \
+            "This feature is currently in beta, would you like to continue? (y/n): " \
+            yn
+
+        case "$yn" in
+            [Yy])
+                echo "Setting up butrelinux extras"
+                return
+                ;;
+            [Nn])
+                echo "Operation canceled by user"
+                exit 0
+                ;;
+            *)
+                echo "Invalid response. Please enter y or n"
+                ;;
+        esac
     done
-'
-distrobox enter "$CONTAINER_NAME" --no-tty -- sudo ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/xdg-open
-distrobox enter "$CONTAINER_NAME" --no-tty -- sudo ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/flatpak
+}
 
-distrobox enter "$CONTAINER_NAME" --no-tty -- sudo sh -c 'cat >> /etc/profile.d/cnfhandle.sh' <<'EOF'
+# ---------------------------------------------------------------------------
+# Package selection
+# ---------------------------------------------------------------------------
+
+select_packages() {
+    local selections
+
+    if ! selections="$(
+        whiptail \
+            --title "butrelinux extras" \
+            --checklist \
+            "Select the applications to install:" \
+            22 78 15 \
+            "${PACKAGE_ITEMS[@]}" \
+            3>&1 1>&2 2>&3
+    )"; then
+        echo "Operation canceled by user"
+        exit 0
+    fi
+
+    # whiptail returns:
+    #
+    # "steam" "firefox" "neovim"
+    #
+    # Parse that into a normal Bash array.
+    local old_ifs="$IFS"
+    IFS=' '
+    read -r -a packages <<< "$selections"
+    IFS="$old_ifs"
+
+    # Remove whiptail's quotes.
+    packages=("${packages[@]//\"/}")
+
+    if ((${#packages[@]} == 0)); then
+        whiptail \
+            --title "Nothing selected" \
+            --msgbox "No applications were selected." \
+            8 50
+
+        exit 0
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# Image naming
+# ---------------------------------------------------------------------------
+
+make_image_name() {
+    local package_hash
+
+    package_hash="$(
+        printf '%s\n' "${packages[@]}" |
+            sort -u |
+            sha256sum |
+            cut -c1-12
+    )"
+
+    IMAGE="localhost/butrelinux-extras:${package_hash}"
+}
+
+# ---------------------------------------------------------------------------
+# Containerfile generation
+# ---------------------------------------------------------------------------
+
+generate_containerfile() {
+    BUILD_DIR="$(mktemp -d)"
+
+    local package_block
+    package_block="$(
+        printf '        %s \\\n' "${packages[@]}" |
+            sed '$ s/ \\$//'
+    )"
+
+    cat > "$BUILD_DIR/Containerfile" <<EOF
+FROM ${BASE_IMAGE}
+
+# dnf5 is used for package installation because the final builder
+# needs normal Fedora repository/package semantics.
+RUN microdnf install -y dnf5 dnf5-plugins sudo bash && \\
+    microdnf clean all
+
+# Terra provides packages such as VSCodium and several of the
+# desktop applications we want to expose.
+RUN dnf5 install -y \\
+        --nogpgcheck \\
+        --repofrompath=terra,https://repos.fyralabs.com/terra\\\$releasever \\
+        terra-release \\
+        terra-gpg-keys
+
+RUN dnf5 makecache
+
+# Application payload.
+#
+# Weak dependencies are deliberately disabled. This container is an
+# application environment, not a complete Fedora workstation.
+RUN dnf5 install -y \\
+        --setopt=install_weak_deps=False \\
+${package_block}
+
+RUN dnf5 clean all && \\
+    rm -rf /var/cache/dnf
+EOF
+}
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+build_image() {
+    echo
+    echo "Building:"
+    echo "  $IMAGE"
+    echo
+    echo "Packages:"
+    printf '  %s\n' "${packages[@]}"
+    echo
+
+    podman build \
+        --tag "$IMAGE" \
+        "$BUILD_DIR"
+}
+
+# ---------------------------------------------------------------------------
+# NVIDIA detection
+# ---------------------------------------------------------------------------
+
+nvidia_enabled() {
+    [[ -r "$IMAGE_INFO" ]] || return 1
+
+    jq -e -r \
+        '.["image-name"] // empty | test("nvidia"; "i")' \
+        "$IMAGE_INFO" \
+        >/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Distrobox
+# ---------------------------------------------------------------------------
+
+create_distrobox() {
+    if distrobox list --no-color 2>/dev/null |
+        awk -v name="$CONTAINER_NAME" '$1 == name { found=1 } END { exit !found }'
+    then
+        die "Distrobox container '$CONTAINER_NAME' already exists"
+    fi
+
+    local distrobox_args=(
+        create
+        --name "$CONTAINER_NAME"
+        --image "$IMAGE"
+        --yes
+        --no-entry
+    )
+
+    if nvidia_enabled; then
+        echo "NVIDIA host detected; enabling Distrobox NVIDIA integration"
+        distrobox_args+=(--nvidia)
+    fi
+
+    distrobox "${distrobox_args[@]}"
+}
+
+# ---------------------------------------------------------------------------
+# Desktop application export
+# ---------------------------------------------------------------------------
+
+export_applications() {
+    # shellcheck disable=SC2016
+    distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
+        set -Eeuo pipefail
+        shopt -s nullglob
+
+        for app in \
+            /usr/share/applications/*.desktop \
+            "$HOME"/.local/share/applications/*.desktop
+        do
+            [[ -e "$app" ]] || continue
+            distrobox-export --app "$app"
+        done
+    '
+}
+
+# ---------------------------------------------------------------------------
+# Host integration
+# ---------------------------------------------------------------------------
+
+configure_host_integration() {
+    distrobox enter "$CONTAINER_NAME" --no-tty -- \
+        sudo ln -sf \
+            /usr/bin/distrobox-host-exec \
+            /usr/local/bin/xdg-open
+
+    distrobox enter "$CONTAINER_NAME" --no-tty -- \
+        sudo ln -sf \
+            /usr/bin/distrobox-host-exec \
+            /usr/local/bin/flatpak
+
+    distrobox enter "$CONTAINER_NAME" --no-tty -- \
+        sudo sh -c 'cat > /etc/profile.d/cnfhandle.sh' <<'EOF'
 command_not_found_handle() {
-  # don't run if not in a container
-  if [ ! -e /run/.containerenv ] && [ ! -e /.dockerenv ]; then
-    exit 127
-  fi
+    # Don't run if not in a container.
+    if [ ! -e /run/.containerenv ] && [ ! -e /.dockerenv ]; then
+        exit 127
+    fi
 
-  distrobox-host-exec "${@}"
+    distrobox-host-exec "${@}"
 }
 
 if [ -n "${ZSH_VERSION-}" ]; then
-  command_not_found_handler() {
-    command_not_found_handle "$@"
-  }
+    command_not_found_handler() {
+        command_not_found_handle "$@"
+    }
 fi
 EOF
+}
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+show_summary() {
+    echo
+    echo "butrelinux extras is ready."
+    echo
+    echo "  Image:     $IMAGE"
+    echo "  Distrobox: $CONTAINER_NAME"
+    echo
+    echo "Installed applications:"
+    printf '  - %s\n' "${packages[@]}"
+    echo
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+main() {
+    command -v whiptail >/dev/null ||
+        die "whiptail is required"
+
+    command -v podman >/dev/null ||
+        die "podman is required"
+
+    command -v distrobox >/dev/null ||
+        die "distrobox is required"
+
+    command -v jq >/dev/null ||
+        die "jq is required"
+
+    confirm_beta
+    select_packages
+    make_image_name
+    generate_containerfile
+    build_image
+    create_distrobox
+    export_applications
+    configure_host_integration
+    show_summary
+}
+
+main "$@"
