@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+#
+# butrelinux extras — state-aware Distrobox application environment
+#
+# State machine:
+#
+#   Container    Marker    Action
+#   ---------    ------    ------
+#   missing      missing   Fresh install (build image, create box, mark)
+#   exists       missing   Prompt to adopt; if yes, mark + inject
+#   missing      exists    Stale state; recreate (build, create, mark)
+#   exists       exists    Managed; inject packages into existing box
+#
 
 set -Eeuo pipefail
 IFS=$'\n\t'
@@ -6,6 +18,8 @@ IFS=$'\n\t'
 readonly CONTAINER_NAME="extras"
 readonly BASE_IMAGE="quay.io/fedora/fedora-minimal:44"
 readonly IMAGE_INFO="/usr/share/ublue-os/image-info.json"
+readonly MARKER_DIR="${HOME}/.local/share/butrelinux-extras"
+readonly MARKER_FILE="${MARKER_DIR}/managed"
 
 # ---------------------------------------------------------------------------
 # Package catalog
@@ -23,7 +37,7 @@ PACKAGE_ITEMS=(
     codium              "VSCodium"                 OFF
     neovim              "Neovim"                   OFF
     desktop-plus-bin    "Github Desktop Plus"      OFF
-	
+
     vesktop             "Vesktop"                  OFF
     fluxer              "Fluxer"                   OFF
     signal-desktop      "Signal Desktop"           OFF
@@ -36,14 +50,14 @@ PACKAGE_ITEMS=(
     inkscape            "Inkscape"                 OFF
     blender             "Blender"                  OFF
     kdenlive            "Kdenlive"                 OFF
-    
+
     firefox             "Firefox"                  OFF
     firefox-langpacks   "Firefox language packs"   OFF
     thunderbird         "Thunderbird"              OFF
     chromium            "Chromium"                 OFF
     qbittorrent         "qBitTorrent"              OFF
     filezilla           "FileZilla"                OFF
-    
+
 
 )
 
@@ -65,6 +79,51 @@ cleanup() {
 trap cleanup EXIT
 
 # ---------------------------------------------------------------------------
+# State-machine helpers
+# ---------------------------------------------------------------------------
+
+marker_exists() {
+    [[ -f "$MARKER_FILE" ]]
+}
+
+container_exists() {
+    distrobox list --no-color 2>/dev/null |
+        awk -v name="$CONTAINER_NAME" '$1 == name { found=1 } END { exit !found }'
+}
+
+create_marker() {
+    mkdir -p "$MARKER_DIR"
+    touch "$MARKER_FILE"
+}
+
+remove_marker() {
+    [[ -f "$MARKER_FILE" ]] && rm -f "$MARKER_FILE"
+}
+
+determine_state() {
+    local has_container=0
+    local has_marker=0
+
+    if container_exists; then
+        has_container=1
+    fi
+
+    if marker_exists; then
+        has_marker=1
+    fi
+
+    if ((has_container == 0 && has_marker == 0)); then
+        echo "fresh"
+    elif ((has_container == 1 && has_marker == 0)); then
+        echo "adopt"
+    elif ((has_container == 0 && has_marker == 1)); then
+        echo "stale"
+    else
+        echo "managed"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Beta warning
 # ---------------------------------------------------------------------------
 
@@ -78,6 +137,33 @@ confirm_beta() {
             [Yy])
                 echo "Setting up butrelinux extras"
                 return
+                ;;
+            [Nn])
+                echo "Operation canceled by user"
+                exit 0
+                ;;
+            *)
+                echo "Invalid response. Please enter y or n"
+                ;;
+        esac
+    done
+}
+
+# ---------------------------------------------------------------------------
+# Adoption prompt
+# ---------------------------------------------------------------------------
+
+prompt_adoption() {
+    while true; do
+        read -r -p \
+            "An unmanaged Distrobox container named '$CONTAINER_NAME' already exists. Adopt it for butrelinux extras management? (y/n): " \
+            yn
+
+        case "$yn" in
+            [Yy])
+                create_marker
+                echo "Container adopted for butrelinux extras management."
+                return 0
                 ;;
             [Nn])
                 echo "Operation canceled by user"
@@ -230,9 +316,7 @@ nvidia_enabled() {
 # ---------------------------------------------------------------------------
 
 create_distrobox() {
-    if distrobox list --no-color 2>/dev/null |
-        awk -v name="$CONTAINER_NAME" '$1 == name { found=1 } END { exit !found }'
-    then
+    if container_exists; then
         die "Distrobox container '$CONTAINER_NAME' already exists"
     fi
 
@@ -250,6 +334,91 @@ create_distrobox() {
     fi
 
     distrobox "${distrobox_args[@]}"
+}
+
+# ---------------------------------------------------------------------------
+# Package injection (managed / adopt paths)
+# ---------------------------------------------------------------------------
+
+inject_packages() {
+    if ((${#packages[@]} == 0)); then
+        echo "No packages selected for installation."
+        return 0
+    fi
+
+    echo
+    echo "Checking existing '$CONTAINER_NAME' container for selected packages..."
+
+    local pkg_list
+    pkg_list=$(printf '%s\n' "${packages[@]}")
+
+    # Query the container for which selected packages are NOT installed.
+    local missing
+    # shellcheck disable=SC2016
+    missing=$(distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
+        set -Eeuo pipefail
+        while IFS= read -r pkg; do
+            rpm -q "$pkg" &>/dev/null || printf "%s\n" "$pkg"
+        done
+    ' <<< "$pkg_list")
+
+    local missing_pkgs=()
+    if [[ -n "$missing" ]]; then
+        mapfile -t missing_pkgs <<< "$missing"
+    fi
+
+    # Compute which packages are already present.
+    local skipped=()
+    for pkg in "${packages[@]}"; do
+        local is_missing=0
+        for mp in "${missing_pkgs[@]}"; do
+            if [[ "$pkg" == "$mp" ]]; then
+                is_missing=1
+                break
+            fi
+        done
+        if ((is_missing == 0)); then
+            skipped+=("$pkg")
+        fi
+    done
+
+    if ((${#skipped[@]} > 0)); then
+        echo
+        echo "Already installed (skipping):"
+        printf '  %s\n' "${skipped[@]}"
+    fi
+
+    if ((${#missing_pkgs[@]} == 0)); then
+        echo
+        echo "All selected packages are already installed."
+        return 0
+    fi
+
+    echo
+    echo "Installing into existing '$CONTAINER_NAME' container:"
+    printf '  %s\n' "${missing_pkgs[@]}"
+    echo
+
+    # For adopted containers that may not have Terra configured yet,
+    # attempt an idempotent setup.  This is a no-op on managed containers.
+    # shellcheck disable=SC2016
+    distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
+        set -Eeuo pipefail
+        if command -v dnf5 &>/dev/null && ! rpm -q terra-release &>/dev/null; then
+            dnf5 install -y --nogpgcheck \
+                --repofrompath=terra,https://repos.fyralabs.com/terra$releasever \
+                terra-release terra-gpg-keys
+            dnf5 makecache
+        fi
+    ' || echo "Warning: Could not ensure Terra repositories in container."
+
+    local install_list
+    install_list="${missing_pkgs[*]}"
+        # shellcheck disable=SC2086
+    distrobox enter "$CONTAINER_NAME" --no-tty -- \
+        sudo dnf5 install -y \
+            --setopt=install_weak_deps=False \
+            $install_list
 }
 
 # ---------------------------------------------------------------------------
@@ -292,7 +461,7 @@ configure_host_integration() {
 command_not_found_handle() {
     # Don't run if not in a container.
     if [ ! -e /run/.containerenv ] && [ ! -e /.dockerenv ]; then
-        exit 127
+        return 127
     fi
 
     distrobox-host-exec "${@}"
@@ -322,6 +491,17 @@ show_summary() {
     echo
 }
 
+show_summary_managed() {
+    echo
+    echo "butrelinux extras packages installed into existing container."
+    echo
+    echo "  Distrobox: $CONTAINER_NAME"
+    echo
+    echo "Installed applications:"
+    printf '  - %s\n' "${packages[@]}"
+    echo
+}
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -340,14 +520,51 @@ main() {
         die "jq is required"
 
     confirm_beta
-    select_packages
-    make_image_name
-    generate_containerfile
-    build_image
-    create_distrobox
-    export_applications
-    configure_host_integration
-    show_summary
+
+    local state
+    state="$(determine_state)"
+
+    case "$state" in
+        fresh)
+            select_packages
+            make_image_name
+            generate_containerfile
+            build_image
+            create_distrobox
+            create_marker
+            export_applications
+            configure_host_integration
+            show_summary
+            ;;
+        adopt)
+            prompt_adoption
+            select_packages
+            inject_packages
+            export_applications
+            configure_host_integration
+            show_summary_managed
+            ;;
+        stale)
+            echo "Managed state found but container is missing. Recreating..."
+            select_packages
+            make_image_name
+            generate_containerfile
+            build_image
+            create_distrobox
+            create_marker
+            export_applications
+            configure_host_integration
+            show_summary
+            ;;
+        managed)
+            select_packages
+            inject_packages
+            show_summary_managed
+            ;;
+        *)
+            die "Unknown state: $state"
+            ;;
+    esac
 }
 
 main "$@"
