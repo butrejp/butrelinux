@@ -213,4 +213,4 @@ There are some packages duplicated from the host. These will eventually be remov
 
 ## Current State
 
-For the current status see ```files/system/usr/bin/enable-extras```.  Don't assume that the current state on github is the deployed version.  You can use ```cat $(which enable-extras)``` to get your current deployed version.
+For the current status see ```files/system/usr/bin/enable-extras```.  Don't assume that the current state on github is the deployed version.  You can use ```cat $(which enable-extras)``` to get your current deployed version.  
