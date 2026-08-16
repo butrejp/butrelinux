@@ -209,4 +209,8 @@ The original 5.39 GB BlueBuild image has served its purpose as a rapid-iteration
 
 ## Host Package Duplicates
 
-There are some packages duplicated from the host. These will eventually be removed from the host environment and live in extras. The most notable example is Firefox. Some users may prefer a different web browser, so keeping the host minimal and offering browser choice through extras is the intended direction.
+There are some packages duplicated from the host. These will eventually be removed from the host environment and live in extras. The most notable example is Firefox. Some users may prefer a different web browser, so keeping the host minimal and offering browser choice through extras is the intended direction.  
+
+## Current State
+
+For the current status see ```files/system/usr/bin/enable-extras```.  Don't assume that the current state on github is the deployed version.  You can use ```cat $(which enable-extras)``` to get your current deployed version.
