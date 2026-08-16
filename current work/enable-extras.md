@@ -287,4 +287,6 @@ The current 5.39 GB BlueBuild image has served its purpose as a rapid-iteration 
 
 
 
-for the current implementation see files/system/usr/bin/enable-extras
+for the current implementation see files/system/usr/bin/enable-extras  
+NOTE: there are some packages duplicated from the host.  these will eventually be removed from the host environment and live in extras.  most notable example is firefox.  I figure some people might want a different web browser.
+
