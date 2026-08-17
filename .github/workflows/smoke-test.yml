@@ -27,7 +27,7 @@ jobs:
         variant: [hwe, nvidia, lto-hwe, lto-nvidia]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Podman
         run: |
