@@ -1,4 +1,4 @@
-![screenshot of desktop and fastfetch](https://repository-images.githubusercontent.com/1181869151/6c7b9e65-ee0f-4e1d-8f30-1460aa6408ca)
+![screenshot of desktop and fastfetch](https://repository-images.githubusercontent.com/1181869151/65e42a48-070b-4285-ab3d-896a793c9f78)
 
 [![bluebuild build badge](https://github.com/butrejp/butrelinux/actions/workflows/build.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build.yml) [![Build Butrelinux ISO](https://github.com/butrejp/butrelinux/actions/workflows/build_iso_unified.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/build_iso_unified.yml) [![Image smoke tests](https://github.com/butrejp/butrelinux/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/butrejp/butrelinux/actions/workflows/smoke-test.yml)  
 [![works on my machine badge](https://cdn.jsdelivr.net/gh/nikku/works-on-my-machine@v0.4.0/badge.svg)](https://github.com/nikku/works-on-my-machine) [![Download butrelinux](https://img.shields.io/sourceforge/dt/butrelinux.svg)](https://butrelinux.sourceforge.io/)
