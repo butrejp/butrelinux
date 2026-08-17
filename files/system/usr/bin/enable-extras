@@ -87,8 +87,7 @@ marker_exists() {
 }
 
 container_exists() {
-    podman container exists "$CONTAINER_NAME" |
-        awk -v name="$CONTAINER_NAME" '$1 == name { found=1 } END { exit !found }'
+    podman container exists "$CONTAINER_NAME" 2>/dev/null
 }
 
 create_marker() {
@@ -337,6 +336,62 @@ create_distrobox() {
 }
 
 # ---------------------------------------------------------------------------
+# Desktop application export
+# ---------------------------------------------------------------------------
+
+export_applications() {
+    # shellcheck disable=SC2016
+    distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
+        set -Eeuo pipefail
+        shopt -s nullglob
+
+        for app in \
+            /usr/share/applications/*.desktop \
+            "$HOME"/.local/share/applications/*.desktop
+        do
+            [[ -e "$app" ]] || continue
+            distrobox-export --app "$app"
+        done
+    '
+}
+
+# Export only the .desktop files belonging to specific packages.
+# Used during managed/adopt injection to avoid the full export loop.
+export_new_applications() {
+    if (($# == 0)); then
+        return 0
+    fi
+
+    echo
+    echo "Exporting desktop applications for new packages..."
+
+    local pkg_list
+    pkg_list=$(printf '%s\n' "$@")
+
+    local desktop_files
+    # shellcheck disable=SC2016
+    desktop_files=$(distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
+        set -Eeuo pipefail
+        while IFS= read -r pkg; do
+            [[ -n "$pkg" ]] || continue
+            rpm -ql "$pkg" 2>/dev/null | grep "\.desktop$" || true
+        done
+    ' <<< "$pkg_list")
+
+    if [[ -z "$desktop_files" ]]; then
+        echo "No new desktop applications to export."
+        return 0
+    fi
+
+    while IFS= read -r app; do
+        [[ -n "$app" ]] || continue
+        echo "  Exporting: $app"
+        distrobox enter "$CONTAINER_NAME" --no-tty -- \
+            distrobox-export --app "$app"
+    done <<< "$desktop_files"
+}
+
+# ---------------------------------------------------------------------------
 # Package injection (managed / adopt paths)
 # ---------------------------------------------------------------------------
 
@@ -414,31 +469,15 @@ inject_packages() {
 
     local install_list
     install_list="${missing_pkgs[*]}"
-        # shellcheck disable=SC2086
+    # shellcheck disable=SC2086
     distrobox enter "$CONTAINER_NAME" --no-tty -- \
         sudo dnf5 install -y \
             --setopt=install_weak_deps=False \
             $install_list
-}
 
-# ---------------------------------------------------------------------------
-# Desktop application export
-# ---------------------------------------------------------------------------
-
-export_applications() {
-    # shellcheck disable=SC2016
-    distrobox enter "$CONTAINER_NAME" --no-tty -- bash -c '
-        set -Eeuo pipefail
-        shopt -s nullglob
-
-        for app in \
-            /usr/share/applications/*.desktop \
-            "$HOME"/.local/share/applications/*.desktop
-        do
-            [[ -e "$app" ]] || continue
-            distrobox-export --app "$app"
-        done
-    '
+    # Export only the .desktop files that belong to the newly installed
+    # packages.  This avoids re-running the full export loop.
+    export_new_applications "${missing_pkgs[@]}"
 }
 
 # ---------------------------------------------------------------------------
