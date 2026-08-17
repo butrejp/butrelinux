@@ -87,7 +87,7 @@ marker_exists() {
 }
 
 container_exists() {
-    distrobox list --no-color 2>/dev/null |
+    podman container exists "$CONTAINER_NAME" |
         awk -v name="$CONTAINER_NAME" '$1 == name { found=1 } END { exit !found }'
 }
 
