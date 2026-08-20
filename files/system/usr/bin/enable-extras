@@ -15,48 +15,48 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly CONTAINER_NAME="extras"
+readonly CONTAINER_NAME="butrelinux-extras"
 readonly BASE_IMAGE="quay.io/fedora/fedora-minimal:44"
 readonly IMAGE_INFO="/usr/share/ublue-os/image-info.json"
 readonly MARKER_DIR="${HOME}/.local/share/butrelinux-extras"
 readonly MARKER_FILE="${MARKER_DIR}/managed"
 
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 # Package catalog
 #
-# tag                 description                 default
-# ---------------------------------------------------------------------------
+#   tag                 description                                       default
+# --------------------------------------------------------------------------------
 
 PACKAGE_ITEMS=(
-    steam               "Steam"                    OFF
-    mangohud            "MangoHud"                 OFF
-    gamemode            "GameMode"                 OFF
-    vkBasalt            "vkBasalt"                 OFF
-    vulkan-tools        "Vulkan tools"             OFF
+    steam               "Steam                                          " OFF
+    mangohud            "MangoHud                                       " OFF
+    gamemode            "GameMode                                       " OFF
+    vkBasalt            "vkBasalt                                       " OFF
+    vulkan-tools        "Vulkan tools                                   " OFF
 
-    codium              "VSCodium"                 OFF
-    neovim              "Neovim"                   OFF
-    desktop-plus-bin    "Github Desktop Plus"      OFF
+    codium              "VSCodium                                       " OFF
+    neovim              "Neovim                                         " OFF
+    desktop-plus-bin    "Github Desktop Plus                            " OFF
 
-    vesktop             "Vesktop"                  OFF
-    fluxer              "Fluxer"                   OFF
-    signal-desktop      "Signal Desktop"           OFF
-    nheko               "Nheko"                    OFF
+    vesktop             "Vesktop                                        " OFF
+    fluxer              "Fluxer                                         " OFF
+    signal-desktop      "Signal Desktop                                 " OFF
+    nheko               "Nheko                                          " OFF
 
-    obs-studio          "OBS Studio"               OFF
-    vlc                 "VLC"                      OFF
-    krita               "Krita"                    OFF
-    gimp                "GIMP"                     OFF
-    inkscape            "Inkscape"                 OFF
-    blender             "Blender"                  OFF
-    kdenlive            "Kdenlive"                 OFF
+    obs-studio          "OBS Studio                                     " OFF
+    vlc                 "VLC                                            " OFF
+    krita               "Krita                                          " OFF
+    gimp                "GIMP                                           " OFF
+    inkscape            "Inkscape                                       " OFF
+    blender             "Blender                                        " OFF
+    kdenlive            "Kdenlive                                       " OFF
 
-    firefox             "Firefox"                  OFF
-    firefox-langpacks   "Firefox language packs"   OFF
-    thunderbird         "Thunderbird"              OFF
-    chromium            "Chromium"                 OFF
-    qbittorrent         "qBitTorrent"              OFF
-    filezilla           "FileZilla"                OFF
+    firefox             "Firefox                                        " OFF
+    firefox-langpacks   "Firefox language packs                         " OFF
+    thunderbird         "Thunderbird                                    " OFF
+    chromium            "Chromium                                       " OFF
+    qbittorrent         "qBitTorrent                                    " OFF
+    filezilla           "FileZilla                                      " OFF
 
 
 )

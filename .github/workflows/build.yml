@@ -2,7 +2,7 @@ name: Build butrelinux images
 on:
   schedule:
     - cron:
-        "0 0 * * 0"
+        "0 0 * * 1,3,5"
   workflow_dispatch: # allow manually triggering builds
 concurrency:
   # only run one build at a time
