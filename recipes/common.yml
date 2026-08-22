@@ -92,6 +92,7 @@ modules:
         - tuned-ppd
         - tuned-profiles-atomic
         - lm_sensors
+        - earlyoom
         
   - type: dnf
     install:
@@ -113,12 +114,14 @@ modules:
         - sddm.service
         - tuned.service
         - tuned-ppd.service
+        - earlyoom.service
       disabled:
         - gdm.service
       masked:
         - rechunker-group-fix.service
         - systemd-oomd.service
         - system-flatpak-setup.timer
+        - systemd-resolved.service
 
   - type: fedora-rpm
     source: local
