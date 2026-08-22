@@ -348,7 +348,7 @@ if [ "${ZFS}" = "true" ]; then
     # -----------------------------------------------------------------
 
     # NOTE: OpenZFS testing repo is HTTP-only.
-    ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/${EL_VERSION}.1/x86_64"
+    ZFS_REPO_URL="http://download.zfsonlinux.org/epel-testing/${EL_VERSION}.2/x86_64"
 
     ZFS_LATEST=$(curl -fsL "${ZFS_REPO_URL}/" | \
         grep -o 'zfs-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-[0-9][0-9]*\.el10\.x86_64\.rpm' | \
