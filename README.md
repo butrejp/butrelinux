@@ -82,3 +82,11 @@ AI does not write code used in this repository, however being based on Bluefin, 
 If that's enough to make you consider not using this distribution, I suggest trying 9Front instead.  
 
 </details>
+
+## future migration
+
+I'll be slowly migrating butrelinux over to an organization at https://github.com/butrelinux in the coming weeks, and more importantly dropping bluefin as my upstream, going straight to centos stream 10.  since gdx is gone using bluefin as my upstream isn't really getting me anything at this stage other than tech debt imposed by someone else's AI agent that I've had to work around.  the new upstream will come on the new organization, not under this repository.  if I keep bluebuild as my tooling I'm probably gonna fork it like silverblue does, as I've got enough custom modules to justify it at this stage.  
+
+I also plan to introduce/reintroduce some variants, most notably LTS (bluefin turned their lts variant into regular ass bluefin, the fuckers), kernel-ml (I don't understand why they're importing a fc44 package for this.  fresh kernels for el10 just exist), and hyperscale (this is the nearest to what bluefin is doing with their HWE branch.), and of course keeping the LTO variant, with nvidia versions for all four.  
+
+new tags will look something like ```ghcr.io/butrelinux/lts-nvidia:latest``` or ```ghcr.io/butrelinux/ml:latest```.  it should be pretty intuitive.  
