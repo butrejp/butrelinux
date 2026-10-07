@@ -79,7 +79,7 @@ this shouldn't ever be an issue, but it's worth documenting.
 
 AI is used in planning stages for some scripts (enable-extras, custom-kernel.sh) and for current placeholder documentation.  It is also frequently used for commit messages.  
 AI does not write code used in this repository, however being based on Bluefin, CentOS Stream 10, and ultimately the Linux kernel, plenty of AI code exists upstream.  
-If that's enough to make you consider not using this distribution, I suggest trying 9Front instead.  
+If that's enough to make you consider not using this distribution, I suggest trying tribblix instead.  
 
 </details>
 
