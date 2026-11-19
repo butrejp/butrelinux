@@ -1,10 +1,12 @@
 # migration
 we've migrated to https://github.com/butrelinux/butrelinux  
-existing users can stay on these builds if they want.  they'll keep building, I'll bump paths or whatever when necessary.  
-ISOs are still over there in releases if you really want to get into this, and I've retained one on sourceforge for now.
 
-instructions for rebasing to the new version can be found on the new repository.  I suggest cleaning up any state that you left first, but I'm not your mom.
+I'm turning off builds here and archiving this repository because bluefin's current development status does not make sense.  use the new version based directly on centos
+in short, bluefin reorganized in like june, and is now reorganizing again, but the docs aren't representative of anything current, and lts is seemingly in flux.  I'm not going to chase their bullshit for an old image.
 
+for existing users:
+```bash
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/butrelinux/lts:latest
+```
 
-LTO versions on this repository are not currently building.  if you need LTO, switch to ghcr.io/butrelinux/lto or ghcr.io/butrelinux/lto-nvidia.  if you need zfs, switch to ghcr.io/butrejp/butrelinux-hwe or ghcr.io/butrejp/butrelinux-hwe-nvidia.  if you need both, stay on your current tag  
-the reason they are not building is because ZFS is currently incompatible with 7.3 due to a bool that was removed in the kernel.  if someone asks, I can either remove zfs from LTO or pin the kernel to 7.2.12 until it builds again, but I strongly suggest moving on to the new butrelinux project.  
+I won't be forcing this switch as ZFS is still broken on kernel 7.3.  if you need zfs, good luck.
